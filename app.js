@@ -3,10 +3,10 @@
 // ============================================
 
 // API 엔드포인트 자동 설정
-// 로컬: http://127.0.0.1:5000, 원격: http://182.219.141.7:5000
+// 로컬: http://127.0.0.1:5000, 원격: http://smileansi.ddns.net:5000
 const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
     ? `http://${window.location.hostname}:5000`
-    : 'http://182.219.141.7:5000';
+    : 'http://smileansi.ddns.net:5000';
 
 const appState = {
     user: null,
