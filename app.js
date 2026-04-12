@@ -168,6 +168,9 @@ async function uploadLocalDataToServer() {
         };
     }
 
+    console.log('업로드할 데이터:', dataToUpload);
+    console.log('현재 시간표:', appState.schedules);
+
     const uploadBtn = document.getElementById('syncUploadBtn');
     uploadBtn.classList.add('uploading');
     uploadBtn.disabled = true;
@@ -180,12 +183,17 @@ async function uploadLocalDataToServer() {
             body: JSON.stringify(dataToUpload)
         });
 
+        console.log('서버 응답 상태:', response.status);
+        const responseText = await response.text();
+        console.log('서버 응답:', responseText);
+
         if (response.ok) {
-            alert('✅ 데이터가 서버에 업로드되었습니다.');
+            alert('✅ 데이터가 서버에 업로드되었습니다.\n시간표: ' + dataToUpload.schedules.length + '개\n시간표멤버: ' + dataToUpload.scheduleMembers.length + '명');
             // 업로드 후 서버에서 다시 얻기
             const getResponse = await fetch(`${API_BASE_URL}/api/data`);
             if (getResponse.ok) {
                 const data = await getResponse.json();
+                console.log('서버에서 받은 데이터:', data);
                 appState.events = data.events || [];
                 appState.bulletins = data.bulletins || [];
                 appState.schedules = data.schedules || [];
@@ -219,10 +227,11 @@ async function uploadLocalDataToServer() {
                 }
             }
         } else {
-            alert('❌ 업로드 실패했습니다. 다시 시도해주세요.');
+            alert('❌ 업로드 실패했습니다. 상태: ' + response.status);
         }
     } catch (e) {
         alert('❌ 오류: ' + e.message);
+        console.error('업로드 오류:', e);
     } finally {
         uploadBtn.classList.remove('uploading');
         uploadBtn.disabled = false;
