@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
@@ -58,6 +58,10 @@ def delete_schedule(schedule_id):
     data['schedules'] = [s for s in data['schedules'] if s['id'] != schedule_id]
     save_data(data)
     return jsonify({'success': True})
+
+@app.route('/<path:filename>')
+def static_files(filename):
+    return send_from_directory('.', filename)
 
 @app.route('/')
 def index():
