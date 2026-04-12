@@ -1308,40 +1308,6 @@ form button[type="submit"] {
     margin-bottom: 1rem;
 }
 
-.hourly-forecast {
-    display: flex;
-    gap: 0.8rem;
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
-    -webkit-overflow-scrolling: touch;
-}
-
-.hourly-item {
-    flex-shrink: 0;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-    color: white;
-    padding: 0.8rem;
-    border-radius: 8px;
-    text-align: center;
-    min-width: 70px;
-}
-
-.hourly-time {
-    font-size: 0.8rem;
-    font-weight: bold;
-    margin-bottom: 0.3rem;
-}
-
-.hourly-icon {
-    font-size: 1.5rem;
-    margin: 0.3rem 0;
-}
-
-.hourly-temp {
-    font-size: 0.9rem;
-    font-weight: bold;
-}
-
 .weather-forecast {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
