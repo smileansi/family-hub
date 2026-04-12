@@ -1,0 +1,1228 @@
+// ============================================
+// 앱 전역 상태 관리
+// ============================================
+
+// API 엔드포인트 자동 설정
+const API_BASE_URL = `http://${window.location.hostname}:5000`;
+
+const appState = {
+    user: null,
+    events: [],
+    bulletins: [],
+    schedules: [],
+    scheduleMembers: [],
+    activeScheduleMember: '전체',
+    todos: [],
+    shopping: [],
+    currentFilter: 'all'
+};
+
+// LocalStorage에서 데이터 로드
+async function loadLocalData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/data`);
+        if (response.ok) {
+            const data = await response.json();
+            appState.events = data.events || [];
+            appState.bulletins = data.bulletins || [];
+            appState.schedules = data.schedules || [];
+            appState.scheduleMembers = data.scheduleMembers || [];
+            appState.activeScheduleMember = data.activeScheduleMember || '전체';
+            appState.todos = data.todos || [];
+            appState.shopping = data.shopping || [];
+            return;
+        }
+    } catch (e) {
+        console.log('Server not available, using localStorage');
+    }
+    
+    // 서버가 없으면 localStorage 사용 (폴백)
+    const saved = localStorage.getItem('familyHubData');
+    if (saved) {
+        const data = JSON.parse(saved);
+        appState.events = data.events || [];
+        appState.bulletins = data.bulletins || [];
+        appState.schedules = data.schedules || [];
+        appState.scheduleMembers = data.scheduleMembers || [];
+        appState.activeScheduleMember = data.activeScheduleMember || '전체';
+        appState.todos = data.todos || [];
+        appState.shopping = data.shopping || [];
+    }
+}
+
+// LocalStorage에 데이터 저장
+async function saveLocalData() {
+    const data = {
+        events: appState.events,
+        bulletins: appState.bulletins,
+        schedules: appState.schedules,
+        scheduleMembers: appState.scheduleMembers,
+        activeScheduleMember: appState.activeScheduleMember,
+        todos: appState.todos,
+        shopping: appState.shopping
+    };
+    
+    try {
+        await fetch(`${API_BASE_URL}/api/data`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+    } catch (e) {
+        // 서버가 없으면 localStorage에 저장
+        localStorage.setItem('familyHubData', JSON.stringify(data));
+    }
+}
+
+// ============================================
+// 인증 (임시: localStorage 기반)
+// ============================================
+function initAuth() {
+    const savedUser = localStorage.getItem('familyHubUser');
+    if (savedUser) {
+        appState.user = JSON.parse(savedUser);
+        showAuthUI();
+    } else {
+        promptLogin();
+    }
+}
+
+function promptLogin() {
+    const name = prompt('👨‍👩‍👧‍👦 패밀리 허브에 오신 것을 환영합니다!\n\n이름을 입력해주세요:');
+    if (name) {
+        appState.user = {
+            id: Date.now(),
+            name: name,
+            color: getRandomColor()
+        };
+        localStorage.setItem('familyHubUser', JSON.stringify(appState.user));
+        showAuthUI();
+        updateFamilySelects();
+    }
+}
+
+function getRandomColor() {
+    const colors = ['#667eea', '#f093fb', '#4facfe', '#ffa502', '#ff6b6b', '#00d4ff'];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+function showAuthUI() {
+    if (appState.user) {
+        document.getElementById('userName').textContent = `👤 ${appState.user.name}`;
+        document.getElementById('userName').style.display = 'block';
+        document.getElementById('loginBtn').style.display = 'none';
+        document.getElementById('logoutBtn').style.display = 'block';
+    }
+}
+
+function logout() {
+    if (confirm('로그아웃하시겠습니까?')) {
+        appState.user = null;
+        localStorage.removeItem('familyHubUser');
+        location.reload();
+    }
+}
+
+// ============================================
+// 탭 관리
+// ============================================
+function initTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            try {
+                const tabName = button.getAttribute('data-tab');
+                
+                // 모든 탭 비활성화
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // 선택된 탭 활성화
+                button.classList.add('active');
+                document.getElementById(tabName).classList.add('active');
+                
+                // 탭별 렌더링 함수 호출
+                switch(tabName) {
+                    case 'calendar':
+                        renderEvents();
+                        break;
+                    case 'bulletin':
+                        renderBulletins();
+                        break;
+                    case 'schedule':
+                        renderScheduleMemberTabs();
+                        renderSchedules();
+                        break;
+                    case 'todos':
+                        renderTodos();
+                        break;
+                    case 'shopping':
+                        renderShopping();
+                        break;
+                }
+            } catch (error) {
+                console.error('Tab error:', error);
+            }
+        });
+    });
+}
+
+// ============================================
+// 모달 관리
+// ============================================
+function setupModals() {
+    // 이벤트 모달
+    setupModal('eventModal', 'addEventBtn', 'eventForm', handleAddEvent);
+    
+    // 공지 모달
+    setupModal('bulletinModal', 'addBulletinBtn', 'bulletinForm', handleAddBulletin);
+    
+    // 시간표 모달
+    setupModal('scheduleModal', 'addScheduleBtn', 'scheduleForm', handleAddSchedule);
+    
+    // 할일 모달
+    setupModal('todoModal', 'addTodoBtn', 'todoForm', handleAddTodo);
+    
+    // 쇼핑 모달
+    setupModal('shoppingModal', 'addShoppingBtn', 'shoppingForm', handleAddShopping);
+}
+
+function setupModal(modalId, btnId, formId, submitHandler) {
+    const modal = document.getElementById(modalId);
+    const btn = document.getElementById(btnId);
+    const form = document.getElementById(formId);
+    const closeBtn = modal.querySelector('.close');
+
+    btn.addEventListener('click', () => {
+        modal.classList.add('show');
+        form.reset();
+    });
+
+    closeBtn.addEventListener('click', () => {
+        modal.classList.remove('show');
+    });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        submitHandler();
+        modal.classList.remove('show');
+        form.reset();
+    });
+}
+
+// ============================================
+// 캘린더 기능
+// ============================================
+let currentDate = new Date();
+
+function initCalendar() {
+    updateCalendarView();
+    document.getElementById('prevMonth').addEventListener('click', prevMonth);
+    document.getElementById('nextMonth').addEventListener('click', nextMonth);
+    renderEvents();
+}
+
+function prevMonth() {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    updateCalendarView();
+}
+
+function nextMonth() {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    updateCalendarView();
+}
+
+function updateCalendarView() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    
+    document.getElementById('currentMonth').textContent = 
+        `${year}년 ${month + 1}월`;
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const prevLastDay = new Date(year, month, 0);
+    
+    const firstDayOfWeek = firstDay.getDay();
+    const lastDate = lastDay.getDate();
+    const prevLastDate = prevLastDay.getDate();
+    
+    const calendarGrid = document.getElementById('calendarGrid');
+    calendarGrid.innerHTML = '';
+    
+    // 요일 헤더
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    days.forEach(day => {
+        const dayHeader = document.createElement('div');
+        dayHeader.className = 'calendar-day-header';
+        dayHeader.textContent = day;
+        dayHeader.style.fontWeight = 'bold';
+        dayHeader.style.textAlign = 'center';
+        calendarGrid.appendChild(dayHeader);
+    });
+    
+    // 이전 달의 일자
+    for (let i = prevLastDate - firstDayOfWeek + 1; i <= prevLastDate; i++) {
+        const dayDiv = createCalendarDay(i, true, year, month - 1);
+        calendarGrid.appendChild(dayDiv);
+    }
+    
+    // 현재 달의 일자
+    for (let i = 1; i <= lastDate; i++) {
+        const dayDiv = createCalendarDay(i, false, year, month);
+        calendarGrid.appendChild(dayDiv);
+    }
+    
+    // 다음 달의 일자
+    for (let i = 1; i <= (42 - lastDate - firstDayOfWeek); i++) {
+        const dayDiv = createCalendarDay(i, true, year, month + 1);
+        calendarGrid.appendChild(dayDiv);
+    }
+    
+    // 일정 표시 업데이트
+    renderEventsOnCalendar();
+}
+
+function createCalendarDay(date, isOtherMonth, year, month) {
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'calendar-day';
+    dayDiv.textContent = date;
+    
+    if (isOtherMonth) {
+        dayDiv.classList.add('other-month');
+    }
+    
+    const today = new Date();
+    if (!isOtherMonth && 
+        date === today.getDate() && 
+        year === today.getFullYear() && 
+        month === today.getMonth()) {
+        dayDiv.classList.add('today');
+    }
+    
+    // 이벤트가 있는 날짜 표시
+    const eventsOnDay = getEventsOnDate(year, month, date);
+    if (eventsOnDay.length > 0) {
+        dayDiv.classList.add('has-events');
+        const eventIndicator = document.createElement('div');
+        eventIndicator.className = 'event-indicator';
+        eventIndicator.textContent = eventsOnDay.length;
+        dayDiv.appendChild(eventIndicator);
+    }
+    
+    return dayDiv;
+}
+
+function getEventsOnDate(year, month, date) {
+    const targetDate = new Date(year, month, date).toDateString();
+    return appState.events.filter(event => {
+        const eventDate = new Date(event.date).toDateString();
+        return eventDate === targetDate;
+    });
+}
+
+function renderEventsOnCalendar() {
+    // 캘린더의 모든 날짜에 이벤트 표시 업데이트
+    const calendarDays = document.querySelectorAll('.calendar-day');
+    calendarDays.forEach(day => {
+        // 기존 이벤트 표시 제거
+        const existingIndicator = day.querySelector('.event-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        day.classList.remove('has-events');
+        
+        // 날짜 정보 추출
+        const dateText = day.textContent.split('\n')[0]; // 이벤트 표시가 있으면 분리
+        const date = parseInt(dateText);
+        
+        if (!day.classList.contains('other-month')) {
+            const eventsOnDay = getEventsOnDate(currentDate.getFullYear(), currentDate.getMonth(), date);
+            if (eventsOnDay.length > 0) {
+                day.classList.add('has-events');
+                const eventIndicator = document.createElement('div');
+                eventIndicator.className = 'event-indicator';
+                eventIndicator.textContent = eventsOnDay.length;
+                day.appendChild(eventIndicator);
+            }
+        }
+    });
+}
+
+function handleAddEvent() {
+    const title = document.getElementById('eventTitle').value;
+    const date = document.getElementById('eventDate').value;
+    const time = document.getElementById('eventTime').value;
+    const desc = document.getElementById('eventDesc').value;
+    const family = document.getElementById('eventFamily').value;
+
+    const event = {
+        id: Date.now(),
+        title,
+        date,
+        time: time || '미정',
+        desc,
+        family: family || '전체',
+        createdBy: appState.user.name,
+        createdAt: new Date().toISOString()
+    };
+
+    appState.events.push(event);
+    saveLocalData();
+    renderEvents();
+    renderEventsOnCalendar(); // 캘린더에도 표시
+}
+
+function renderEvents() {
+    const eventsList = document.getElementById('eventsList');
+    eventsList.innerHTML = '';
+
+    const sortedEvents = [...appState.events].sort((a, b) => 
+        new Date(a.date) - new Date(b.date)
+    );
+
+    if (sortedEvents.length === 0) {
+        eventsList.innerHTML = '<div class="empty-state">등록된 일정이 없습니다.</div>';
+        return;
+    }
+
+    sortedEvents.forEach(event => {
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'event-item';
+        eventDiv.innerHTML = `
+            <div class="event-title">${event.title}</div>
+            <div class="event-date">📅 ${event.date} ${event.time}</div>
+            <div class="event-date">👤 ${event.createdBy}</div>
+            ${event.desc ? `<div class="event-date" style="margin-top: 0.5rem;">${event.desc}</div>` : ''}
+            <div class="event-actions">
+                <button class="btn btn-small btn-danger" onclick="deleteEvent(${event.id})">삭제</button>
+            </div>
+        `;
+        eventsList.appendChild(eventDiv);
+    });
+}
+
+function deleteEvent(id) {
+    if (confirm('정말 삭제하시겠습니까?')) {
+        appState.events = appState.events.filter(e => e.id !== id);
+        saveLocalData();
+        renderEvents();
+        renderEventsOnCalendar(); // 캘린더에서도 제거
+    }
+}
+
+// ============================================
+// 공지/메모 기능
+// ============================================
+function handleAddBulletin() {
+    const title = document.getElementById('bulletinTitle').value;
+    const content = document.getElementById('bulletinContent').value;
+
+    const bulletin = {
+        id: Date.now(),
+        title,
+        content,
+        createdBy: appState.user.name,
+        createdAt: new Date().toISOString()
+    };
+
+    appState.bulletins.unshift(bulletin);
+    saveLocalData();
+    renderBulletins();
+}
+
+function toggleBulletin(id) {
+    const bulletinDiv = document.querySelector(`[onclick="toggleBulletin(${id})"]`).parentElement;
+    const contentDiv = bulletinDiv.querySelector('.bulletin-content');
+    const actionsDiv = bulletinDiv.querySelector('.bulletin-actions');
+    const toggleIcon = bulletinDiv.querySelector('.bulletin-toggle');
+    const isCollapsed = contentDiv.classList.contains('collapsed');
+    contentDiv.classList.toggle('collapsed');
+    actionsDiv.classList.toggle('collapsed');
+    toggleIcon.textContent = isCollapsed ? '▲' : '▼';
+}
+
+function renderBulletins() {
+    const bulletinList = document.getElementById('bulletinList');
+    bulletinList.innerHTML = '';
+
+    if (appState.bulletins.length === 0) {
+        bulletinList.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">작성된 메모가 없습니다.</div>';
+        return;
+    }
+
+    appState.bulletins.forEach(bulletin => {
+        const bulletinDiv = document.createElement('div');
+        bulletinDiv.className = 'bulletin-item';
+        bulletinDiv.innerHTML = `
+            <div class="bulletin-header" onclick="toggleBulletin(${bulletin.id})">
+                <h3 class="bulletin-title">${bulletin.title}</h3>
+                <span class="bulletin-toggle">▼</span>
+            </div>
+            <div class="bulletin-content collapsed"></div>
+            <div class="bulletin-actions collapsed">
+                <button class="btn btn-small" onclick="editBulletin(${bulletin.id})" style="background: rgba(255,255,255,0.3); color: white;">수정</button>
+                <button class="btn btn-small" onclick="deleteBulletin(${bulletin.id})" style="background: rgba(255,255,255,0.3); color: white;">삭제</button>
+            </div>
+        `;
+        // Render markdown in bulletin-content
+        const contentDiv = bulletinDiv.querySelector('.bulletin-content');
+        if (window.marked) {
+            contentDiv.innerHTML = marked.parse(bulletin.content || '');
+        } else {
+            contentDiv.textContent = bulletin.content;
+        }
+        bulletinList.appendChild(bulletinDiv);
+    });
+}
+
+function editBulletin(id) {
+    const bulletin = appState.bulletins.find(b => b.id === id);
+    if (!bulletin) return;
+    if (bulletin.createdBy !== appState.user.name) {
+        alert('본인이 작성한 메모만 수정할 수 있습니다.');
+        return;
+    }
+    // Open modal and fill values
+    const modal = document.getElementById('editBulletinModal');
+    const titleInput = document.getElementById('editBulletinTitle');
+    const contentInput = document.getElementById('editBulletinContent');
+    titleInput.value = bulletin.title;
+    contentInput.value = bulletin.content;
+    modal.style.display = 'block';
+
+    // Save handler
+    const form = document.getElementById('editBulletinForm');
+    const closeBtn = document.getElementById('editBulletinClose');
+    // Remove previous listeners
+    form.onsubmit = function(e) {
+        e.preventDefault();
+        bulletin.title = titleInput.value;
+        bulletin.content = contentInput.value;
+        saveLocalData();
+        renderBulletins();
+        modal.style.display = 'none';
+    };
+    closeBtn.onclick = function() {
+        modal.style.display = 'none';
+    };
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+}
+
+function deleteBulletin(id) {
+    const bulletin = appState.bulletins.find(b => b.id === id);
+    if (bulletin && bulletin.createdBy !== appState.user.name) {
+        alert('본인이 작성한 메모만 삭제할 수 있습니다.');
+        return;
+    }
+
+    if (confirm('정말 삭제하시겠습니까?')) {
+        appState.bulletins = appState.bulletins.filter(b => b.id !== id);
+        saveLocalData();
+        renderBulletins();
+    }
+}
+
+// ============================================
+// 시간표 기능
+// ============================================
+function updateFamilySelects() {
+    // 가족 멤버 목록 업데이트
+    const familySelects = document.querySelectorAll('[id$="Family"]');
+    familySelects.forEach(select => {
+        const currentValue = select.value;
+        select.innerHTML = '<option value="">가족 멤버 선택</option>' +
+            '<option value="전체">전체</option>';
+    });
+}
+
+const scheduleColorMap = {};
+
+const colorPalette = [
+    'hsl(6, 56%, 86%)',    // coral
+    'hsl(24, 58%, 86%)',   // apricot
+    'hsl(44, 55%, 88%)',   // mellow yellow
+    'hsl(72, 52%, 88%)',   // soft lime
+    'hsl(110, 45%, 86%)',  // mint
+    'hsl(165, 50%, 86%)',  // seafoam
+    'hsl(190, 55%, 86%)',  // sky
+    'hsl(215, 55%, 86%)',  // baby blue
+    'hsl(240, 55%, 86%)',  // periwinkle
+    'hsl(265, 55%, 85%)',  // lavender
+    'hsl(295, 55%, 85%)',  // orchid
+    'hsl(325, 55%, 85%)',  // rose
+    'hsl(0, 55%, 85%)',    // soft red
+    'hsl(28, 52%, 84%)',   // peach
+    'hsl(55, 52%, 86%)',   // wheat
+    'hsl(160, 45%, 86%)',  // aqua
+    'hsl(205, 48%, 86%)',  // powder blue
+    'hsl(250, 48%, 86%)',  // bluebell
+    'hsl(290, 48%, 86%)',  // violet
+    'hsl(330, 48%, 86%)'   // blush
+];
+
+function assignScheduleColors() {
+    Object.keys(scheduleColorMap).forEach(key => delete scheduleColorMap[key]);
+
+    const uniqueActivities = Array.from(new Set(appState.schedules
+        .map(s => s.activity && s.activity.toString().trim())
+        .filter(Boolean)
+    ));
+
+    uniqueActivities.sort((a, b) => a.localeCompare(b, 'ko-KR', { sensitivity: 'base' }));
+    const usedColors = new Set();
+
+    uniqueActivities.forEach(activity => {
+        const key = activity.toLowerCase();
+        const unusedColor = colorPalette.find(color => !usedColors.has(color));
+        let color;
+        if (unusedColor) {
+            color = unusedColor;
+        } else {
+            let hue = (usedColors.size * 40) % 360;
+            color = `hsl(${hue}, 52%, 86%)`;
+            while (usedColors.has(color)) {
+                hue = (hue + 35) % 360;
+                color = `hsl(${hue}, 52%, 86%)`;
+            }
+        }
+
+        scheduleColorMap[key] = color;
+        usedColors.add(color);
+    });
+}
+
+function getScheduleColor(name) {
+    if (!name) return '#e8f5e8';
+    const key = name.toString().trim().toLowerCase();
+    return scheduleColorMap[key] || '#e8f5e8';
+}
+
+function parseTime(time) {
+    const [hour, minute] = time.split(':').map(Number);
+    return hour * 60 + minute;
+}
+
+function initScheduleMembers() {
+    renderScheduleMemberTabs();
+}
+
+function renderScheduleMemberTabs() {
+    const tabsContainer = document.getElementById('scheduleMemberTabs');
+    tabsContainer.innerHTML = '';
+
+    appState.scheduleMembers.forEach(member => {
+        const tab = document.createElement('button');
+        tab.className = `member-tab ${appState.activeScheduleMember === member ? 'active' : ''}`;
+        tab.textContent = member;
+        tab.addEventListener('click', () => {
+            appState.activeScheduleMember = member;
+            saveLocalData();
+            renderScheduleMemberTabs();
+            renderSchedules();
+        });
+        tabsContainer.appendChild(tab);
+    });
+
+    if (appState.scheduleMembers.length === 0) {
+        const info = document.createElement('div');
+        info.className = 'schedule-tab-info';
+        info.textContent = '이름을 먼저 추가해주세요.';
+        tabsContainer.appendChild(info);
+    }
+}
+
+function addScheduleMember() {
+    const name = prompt('추가할 이름을 입력해주세요:');
+    if (!name) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    if (appState.scheduleMembers.includes(trimmed)) {
+        alert('이미 등록된 이름입니다.');
+        return;
+    }
+    appState.scheduleMembers.push(trimmed);
+    appState.activeScheduleMember = trimmed;
+    saveLocalData();
+    renderScheduleMemberTabs();
+    renderSchedules();
+}
+
+function handleAddSchedule() {
+    if (appState.scheduleMembers.length === 0) {
+        alert('먼저 이름을 추가해주세요.');
+        return;
+    }
+
+    const member = appState.activeScheduleMember;
+    if (!member || !appState.scheduleMembers.includes(member)) {
+        alert('개별 이름 탭을 선택한 상태에서 일정을 추가해주세요.');
+        return;
+    }
+
+    const day = document.getElementById('scheduleDay').value;
+    const startTime = document.getElementById('scheduleStartTime').value;
+    const endTime = document.getElementById('scheduleEndTime').value;
+    const activity = document.getElementById('scheduleActivity').value;
+
+    if (startTime >= endTime) {
+        alert('시작 시간은 끝 시간보다 빨라야 합니다.');
+        return;
+    }
+
+    const schedule = {
+        id: Date.now(),
+        member,
+        day,
+        startTime,
+        endTime,
+        activity,
+        createdBy: appState.user.name,
+        createdAt: new Date().toISOString()
+    };
+
+    appState.schedules.push(schedule);
+    saveLocalData();
+    renderSchedules();
+}
+
+function renderSchedules() {
+    try {
+        const scheduleList = document.getElementById('scheduleList');
+        const overlay = document.getElementById('scheduleOverlay');
+        scheduleList.innerHTML = '';
+        overlay.innerHTML = '';
+
+        if (appState.scheduleMembers.length === 0) {
+            scheduleList.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">먼저 이름을 추가해주세요.</div>';
+            return;
+        }
+
+        if (!appState.scheduleMembers.includes(appState.activeScheduleMember)) {
+            appState.activeScheduleMember = appState.scheduleMembers[0];
+        }
+
+        const daysOrder = ['월', '화', '수', '목', '금', '토'];
+        const memberSchedules = appState.schedules
+            .filter(s => s.member === appState.activeScheduleMember)
+            .map(s => {
+                let startTime = s.startTime || s.time;
+                let endTime = s.endTime || (s.time ? `${(parseInt(s.time.split(':')[0]) + 1).toString().padStart(2, '0')}:00` : startTime);
+                return { ...s, startTime, endTime };
+            });
+
+        if (memberSchedules.length === 0) {
+            scheduleList.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">등록된 시간표가 없습니다.</div>';
+            return;
+        }
+
+        const schedulesByDay = {};
+        daysOrder.forEach(day => {
+            schedulesByDay[day] = memberSchedules
+                .filter(s => s.day === day)
+                .sort((a, b) => a.startTime.localeCompare(b.startTime));
+        });
+
+        const timetable = document.createElement('table');
+        timetable.className = 'timetable';
+        
+        const timeSlots = [];
+        for (let hour = 8; hour <= 22; hour++) {
+            timeSlots.push({ hour, minute: '00' });
+        }
+
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headerRow.className = 'timetable-header';
+        
+        const timeHeader = document.createElement('th');
+        timeHeader.className = 'timetable-time-header';
+        timeHeader.textContent = '시간';
+        headerRow.appendChild(timeHeader);
+        
+        daysOrder.forEach(day => {
+            const dayHeader = document.createElement('th');
+            dayHeader.className = 'timetable-day-header';
+            dayHeader.textContent = day;
+            headerRow.appendChild(dayHeader);
+        });
+        
+        thead.appendChild(headerRow);
+        timetable.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        timeSlots.forEach(slot => {
+            const row = document.createElement('tr');
+            row.className = 'timetable-row';
+            
+            const timeCell = document.createElement('td');
+            timeCell.className = 'timetable-time';
+            timeCell.textContent = `${slot.hour.toString().padStart(2, '0')}:${slot.minute}`;
+            row.appendChild(timeCell);
+            
+            daysOrder.forEach(() => {
+                const cell = document.createElement('td');
+                cell.className = 'timetable-slot';
+                row.appendChild(cell);
+            });
+            tbody.appendChild(row);
+        });
+
+        timetable.appendChild(tbody);
+        scheduleList.appendChild(timetable);
+
+        assignScheduleColors();
+
+        // 카드 배치 (간단한 버전)
+        setTimeout(() => {
+            try {
+                const headerHeight = timetable.querySelector('thead').offsetHeight;
+                const bodyRows = timetable.querySelectorAll('tbody tr');
+                const rowHeight = bodyRows[0] ? bodyRows[0].offsetHeight : 40;
+                const headerCells = timetable.querySelectorAll('thead th');
+                const overlayHeight = headerHeight + (bodyRows.length * rowHeight);
+                
+                overlay.style.height = `${overlayHeight}px`;
+                overlay.style.width = `${timetable.offsetWidth}px`;
+                overlay.style.left = `${timetable.offsetLeft}px`;
+                overlay.style.right = 'auto';
+                
+                memberSchedules.forEach(schedule => {
+                    const colIndex = daysOrder.indexOf(schedule.day);
+                    if (colIndex < 0 || !headerCells[colIndex + 1]) return;
+
+                    const startMinutes = parseTime(schedule.startTime);
+                    const endMinutes = parseTime(schedule.endTime);
+                    const top = headerHeight + ((startMinutes - 480) / 60) * rowHeight;
+                    const height = ((endMinutes - startMinutes) / 60) * rowHeight;
+                    
+                    const headerCell = headerCells[colIndex + 1];
+                    const left = headerCell.offsetLeft;
+                    const width = headerCell.offsetWidth;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'schedule-card';
+                    card.style.position = 'absolute';
+                    card.style.top = `${top}px`;
+                    card.style.left = `${left}px`;
+                    card.style.width = `${width}px`;
+                    card.style.height = `${height}px`;
+                    card.style.backgroundColor = getScheduleColor(schedule.activity);
+                    card.title = `${schedule.startTime} ~ ${schedule.endTime}`;
+                    card.innerHTML = `
+                        <button class="schedule-card-close" onclick="deleteSchedule(${schedule.id})">✕</button>
+                        <div class="schedule-card-activity">${schedule.activity}</div>
+                        <div class="schedule-card-time">${schedule.startTime} ~ ${schedule.endTime}</div>
+                    `;
+                    card.addEventListener('click', function(event) {
+                        if (event.target.closest('.schedule-card-close')) return;
+                        if (window.innerWidth <= 768) {
+                            openScheduleModal(schedule);
+                        }
+                    });
+                    overlay.appendChild(card);
+                });
+            } catch (e) {
+                console.error('Card placement error:', e);
+            }
+        }, 100);
+    } catch (error) {
+        console.error('Render schedules error:', error);
+    }
+}
+
+function openScheduleModal(schedule) {
+    const modal = document.getElementById('scheduleDetailModal');
+    const title = document.getElementById('scheduleDetailTitle');
+    const day = document.getElementById('scheduleDetailDay');
+    const time = document.getElementById('scheduleDetailTime');
+    const activity = document.getElementById('scheduleDetailActivity');
+
+    if (!modal) return;
+    title.textContent = schedule.activity;
+    day.textContent = `${schedule.day}요일`;
+    time.textContent = `${schedule.startTime} ~ ${schedule.endTime}`;
+    activity.textContent = schedule.activity;
+    modal.classList.add('show');
+}
+
+function setupInfoModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    const closeBtn = modal.querySelector('.close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('show');
+        });
+    }
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.classList.remove('show');
+        }
+    });
+}
+
+function deleteSchedule(id) {
+    if (confirm('정말 삭제하시겠습니까?')) {
+        appState.schedules = appState.schedules.filter(s => s.id !== id);
+        saveLocalData();
+        renderSchedules();
+    }
+}
+
+// ============================================
+// 할일 기능
+// ============================================
+function handleAddTodo() {
+    const title = document.getElementById('todoTitle').value;
+    const assignee = document.getElementById('todoAssignee').value;
+    const dueDate = document.getElementById('todoDueDate').value;
+    const priority = document.getElementById('todoPriority').value;
+
+    const todo = {
+        id: Date.now(),
+        title,
+        assignee: assignee || appState.user.name,
+        dueDate,
+        priority,
+        completed: false,
+        createdBy: appState.user.name,
+        createdAt: new Date().toISOString()
+    };
+
+    appState.todos.push(todo);
+    saveLocalData();
+    renderTodos();
+}
+
+function renderTodos() {
+    const todoList = document.getElementById('todoList');
+    todoList.innerHTML = '';
+
+    let filtered = appState.todos;
+    
+    if (appState.currentFilter === 'active') {
+        filtered = appState.todos.filter(t => !t.completed);
+    } else if (appState.currentFilter === 'completed') {
+        filtered = appState.todos.filter(t => t.completed);
+    }
+
+    if (filtered.length === 0) {
+        todoList.innerHTML = '<div class="empty-state">할일이 없습니다.</div>';
+        return;
+    }
+
+    filtered.forEach(todo => {
+        const todoDiv = document.createElement('div');
+        todoDiv.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+        
+        todoDiv.innerHTML = `
+            <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} 
+                onchange="toggleTodo(${todo.id})">
+            <div class="todo-content">
+                <div class="todo-title">${todo.title}</div>
+                <div class="todo-meta">
+                    👤 ${todo.assignee} · 📅 ${todo.dueDate}
+                </div>
+            </div>
+            <span class="todo-priority ${todo.priority}">${
+                todo.priority === 'high' ? '높음' : 
+                todo.priority === 'medium' ? '중간' : '낮음'
+            }</span>
+            <div class="event-actions">
+                <button class="btn btn-small btn-danger" onclick="deleteTodo(${todo.id})">삭제</button>
+            </div>
+        `;
+        
+        todoList.appendChild(todoDiv);
+    });
+}
+
+function toggleTodo(id) {
+    const todo = appState.todos.find(t => t.id === id);
+    if (todo) {
+        todo.completed = !todo.completed;
+        saveLocalData();
+        renderTodos();
+    }
+}
+
+function deleteTodo(id) {
+    if (confirm('정말 삭제하시겠습니까?')) {
+        appState.todos = appState.todos.filter(t => t.id !== id);
+        saveLocalData();
+        renderTodos();
+    }
+}
+
+// 할일 필터
+document.addEventListener('DOMContentLoaded', () => {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            appState.currentFilter = btn.getAttribute('data-filter');
+            renderTodos();
+        });
+    });
+});
+
+// ============================================
+// 쇼핑 리스트 기능
+// ============================================
+function handleAddShopping() {
+    const item = document.getElementById('shoppingItem').value;
+    const price = parseFloat(document.getElementById('shoppingPrice').value) || 0;
+    const qty = parseInt(document.getElementById('shoppingQty').value) || 1;
+    const category = document.getElementById('shoppingCategory').value;
+
+    const shopping = {
+        id: Date.now(),
+        item,
+        price,
+        qty,
+        category,
+        purchased: false,
+        createdBy: appState.user.name,
+        createdAt: new Date().toISOString()
+    };
+
+    appState.shopping.push(shopping);
+    saveLocalData();
+    renderShopping();
+}
+
+function renderShopping() {
+    const shoppingList = document.getElementById('shoppingList');
+    shoppingList.innerHTML = '';
+
+    if (appState.shopping.length === 0) {
+        shoppingList.innerHTML = '<div class="empty-state">쇼핑 리스트가 비어있습니다.</div>';
+        updateShoppingTotal();
+        return;
+    }
+
+    appState.shopping.forEach(shop => {
+        const shopDiv = document.createElement('div');
+        shopDiv.className = `shopping-item ${shop.purchased ? 'completed' : ''}`;
+        
+        const totalPrice = shop.price * shop.qty;
+        
+        shopDiv.innerHTML = `
+            <div class="shopping-item-content">
+                <input type="checkbox" class="shopping-checkbox" ${shop.purchased ? 'checked' : ''} 
+                    onchange="toggleShopping(${shop.id})">
+                <div class="shopping-details">
+                    <div class="shopping-item-name">${shop.item}</div>
+                    <div class="shopping-item-category">${shop.category} · 수량: ${shop.qty}</div>
+                </div>
+            </div>
+            <div class="shopping-price">₩${totalPrice.toLocaleString()}</div>
+            <div class="event-actions">
+                <button class="btn btn-small btn-danger" onclick="deleteShopping(${shop.id})">삭제</button>
+            </div>
+        `;
+        
+        shoppingList.appendChild(shopDiv);
+    });
+
+    updateShoppingTotal();
+}
+
+function toggleShopping(id) {
+    const shop = appState.shopping.find(s => s.id === id);
+    if (shop) {
+        shop.purchased = !shop.purchased;
+        saveLocalData();
+        renderShopping();
+    }
+}
+
+function deleteShopping(id) {
+    if (confirm('정말 삭제하시겠습니까?')) {
+        appState.shopping = appState.shopping.filter(s => s.id !== id);
+        saveLocalData();
+        renderShopping();
+    }
+}
+
+function updateShoppingTotal() {
+    const total = appState.shopping
+        .filter(s => !s.purchased)
+        .reduce((sum, s) => sum + (s.price * s.qty), 0);
+    document.getElementById('shoppingTotal').textContent = `₩${total.toLocaleString()}`;
+}
+
+// ============================================
+// 위젯 통합 범사
+// ============================================
+document.addEventListener('DOMContentLoaded', async () => {
+    // 초기화
+    await loadLocalData();
+    initAuth();
+    initTabs();
+    setupModals();
+    initCalendar();
+    initScheduleMembers();
+    renderBulletins();
+    renderSchedules();
+    renderTodos();
+    renderShopping();
+    initWeather();
+    setupInfoModal('scheduleDetailModal');
+
+    document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
+
+    // 로그아웃 버튼
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+
+    // 날씨 입력
+    const weatherInput = document.getElementById('weatherLocation');
+    const weatherSearchBtn = document.getElementById('weatherSearchBtn');
+    
+    if (weatherInput && weatherSearchBtn) {
+        weatherInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fetchWeather(weatherInput.value);
+            }
+        });
+        
+        weatherSearchBtn.addEventListener('click', () => {
+            fetchWeather(weatherInput.value);
+        });
+    }
+});
+
+// ============================================
+// 날씨 기능
+// ============================================
+function initWeather() {
+    // 기본 위치에서 날씨 표시
+    const defaultLocation = localStorage.getItem('weatherLocation') || '서울';
+    fetchWeather(defaultLocation);
+}
+
+async function fetchWeather(location) {
+    const container = document.getElementById('weatherContainer');
+    container.innerHTML = '<div class="weather-loading">날씨 정보를 불러오는 중...</div>';
+
+    try {
+        // Open-Meteo API 사용 (무료, API 키 불필요)
+        const geoResponse = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&language=ko`
+        );
+        const geoData = await geoResponse.json();
+
+        if (!geoData.results || geoData.results.length === 0) {
+            container.innerHTML = '<div class="weather-error">도시를 찾을 수 없습니다. 다시 입력해주세요.</div>';
+            return;
+        }
+
+        const place = geoData.results[0];
+        const weatherResponse = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code,weather_description&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
+        );
+        const weatherData = await weatherResponse.json();
+
+        localStorage.setItem('weatherLocation', location);
+        renderWeather(weatherData, place);
+    } catch (error) {
+        container.innerHTML = '<div class="weather-error">날씨 정보를 가져올 수 없습니다.</div>';
+        console.error('날씨 에러:', error);
+    }
+}
+
+function renderWeather(data, place) {
+    const container = document.getElementById('weatherContainer');
+    const current = data.current;
+    const daily = data.daily;
+
+    const weatherDescription = getWeatherDescription(current.weather_code);
+    const weatherIcon = getWeatherIcon(current.weather_code);
+
+    let forecast = '';
+    for (let i = 1; i < 5; i++) {
+        const icon = getWeatherIcon(daily.weather_code[i]);
+        forecast += `
+            <div class="forecast-item">
+                <div class="forecast-day">${new Date(daily.time[i]).toLocaleDateString('ko-KR', {weekday: 'short'})}</div>
+                <div class="forecast-icon">${icon}</div>
+                <div class="forecast-temp">${daily.temperature_2m_max[i]}°/${daily.temperature_2m_min[i]}°</div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = `
+        <div class="weather-main">
+            <div class="weather-info">
+                <div class="weather-icon">${weatherIcon}</div>
+                <div class="weather-details">
+                    <div class="weather-location">${place.name}, ${place.admin1 || place.country}</div>
+                    <div class="weather-temp">${current.temperature_2m}°C</div>
+                    <div class="weather-description">${weatherDescription}</div>
+                </div>
+            </div>
+            <div class="weather-forecast">
+                ${forecast}
+            </div>
+        </div>
+    `;
+}
+
+function getWeatherIcon(code) {
+    // WMO Weather codes
+    if (code === 0) return '☀️';
+    if (code === 1 || code === 2) return '🌤️';
+    if (code === 3) return '☁️';
+    if (code === 45 || code === 48) return '🌫️';
+    if (code === 51 || code === 53 || code === 55 || code === 61 || code === 63 || code === 65 || code === 80 || code === 81 || code === 82) return '🌧️';
+    if (code === 71 || code === 73 || code === 75 || code === 77 || code === 85 || code === 86) return '❄️';
+    if (code === 80 || code === 81 || code === 82) return '⛈️';
+    if (code === 95 || code === 96 || code === 99) return '⛈️';
+    return '🌤️';
+}
+
+function getWeatherDescription(code) {
+    const descriptions = {
+        0: '맑음',
+        1: '거의 맑음',
+        2: '구름 조금',
+        3: '흐림',
+        45: '안개',
+        48: '서리 안개',
+        51: '이슬비',
+        53: '중간 이슬비',
+        55: '강한 이슬비',
+        61: '약한 비',
+        63: '중간 비',
+        65: '강한 비',
+        71: '약한 눈',
+        73: '중간 눈',
+        75: '강한 눈',
+        77: '눈입자',
+        80: '약한 소나기',
+        81: '중간 소나기',
+        82: '강한 소나기',
+        85: '약한 눈소나기',
+        86: '강한 눈소나기',
+        95: '뇌우',
+        96: '우박과 뇌우',
+        99: '강한 우박 뇌우'
+    };
+    return descriptions[code] || '불명';
+}

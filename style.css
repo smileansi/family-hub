@@ -1,0 +1,1424 @@
+/* ============================================
+   전역 스타일
+   ============================================ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-color: #5468ff;
+    --secondary-color: #f093fb;
+    --success-color: #00d4ff;
+    --warning-color: #ffa502;
+    --danger-color: #ff6b6b;
+    --light-bg: #f8f9fa;
+    --dark-text: #2c3e50;
+    --border-color: #e1e8ed;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+html, body {
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--light-bg);
+    color: var(--dark-text);
+}
+
+body {
+    display: grid;
+    grid-template-areas:
+        "header header"
+        "sidebar main";
+    grid-template-columns: 200px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+}
+
+/* 모바일용 레이아웃 */
+@media (max-width: 768px) {
+    body {
+        grid-template-areas:
+            "header"
+            "nav"
+            "main";
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+    }
+}
+
+/* ============================================
+   헤더
+   ============================================ */
+.header {
+    grid-area: header;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 1rem 2rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* 모바일용 헤더 */
+@media (max-width: 768px) {
+    .header {
+        padding: 0.8rem 1rem;
+    }
+
+    .logo {
+        font-size: 1.4rem;
+    }
+}
+
+.header .container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.logo i {
+    font-size: 2rem;
+}
+
+.header-right {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+/* ============================================
+   컨테이너
+   ============================================ */
+.container {
+    max-width: 100%;
+    margin: 0;
+    padding: 2rem;
+    width: 100%;
+}
+
+main {
+    grid-area: main;
+    padding: 0;
+    overflow-y: auto;
+}
+
+/* ============================================
+   버튼
+   ============================================ */
+.btn {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #4557f0;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.btn-logout {
+    background: transparent;
+    color: white;
+    border: 1px solid white;
+}
+
+.btn-logout:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #f073eb;
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #ff5252;
+}
+
+.btn-small {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+/* ============================================
+   탭 네비게이션 (좌측 사이드바 / 모바일 상단바)
+   ============================================ */
+.tab-nav {
+    grid-area: sidebar;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: white;
+    border-right: 2px solid var(--border-color);
+    border-bottom: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    z-index: 100;
+    width: auto;
+    padding: 1rem 0;
+}
+
+/* 모바일용 탭 네비게이션 */
+@media (max-width: 768px) {
+    .tab-nav {
+        grid-area: nav;
+        flex-direction: row;
+        border-right: none;
+        border-bottom: 2px solid var(--border-color);
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 0.5rem;
+        gap: 0.5rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-btn {
+        padding: 0.8rem 1rem;
+        font-size: 0.85rem;
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+        flex-shrink: 0;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .tab-btn.active {
+        border-left: none;
+        border-bottom-color: var(--primary-color);
+    }
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: #666;
+    border-bottom: none;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    pointer-events: auto;
+    user-select: none;
+}
+
+.tab-icon {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+}
+
+.tab-btn:hover {
+    background: var(--light-bg);
+}
+
+.tab-btn.active {
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+    background: rgba(84, 104, 255, 0.08);
+    border-bottom-color: transparent;
+}
+
+.tab-btn.active .tab-icon {
+    color: var(--primary-color);
+}
+
+/* ============================================
+   탭 콘텐츠
+   ============================================ */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.tab-header h2 {
+    font-size: 1.8rem;
+    color: var(--dark-text);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.tab-header h2 i {
+    color: var(--primary-color);
+}
+
+/* ============================================
+   모달
+   ============================================ */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.close {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    color: #999;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal-content h2 {
+    margin-bottom: 1.5rem;
+    color: var(--dark-text);
+}
+
+/* ============================================
+   폼
+   ============================================ */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.time-range {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+input[type="text"],
+input[type="date"],
+input[type="time"],
+input[type="number"],
+textarea,
+select {
+    padding: 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(84, 104, 255, 0.1);
+}
+
+textarea {
+    resize: vertical;
+}
+
+form button[type="submit"] {
+    margin-top: 0.5rem;
+}
+
+/* ============================================
+   캘린더
+   ============================================ */
+.calendar-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.mini-calendar {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.calendar-header button {
+    background: var(--light-bg);
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.calendar-header h3 {
+    font-size: 1.2rem;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.calendar-day:hover {
+    background: var(--light-bg);
+}
+
+.calendar-day.today {
+    background: var(--primary-color);
+    color: white;
+    font-weight: bold;
+}
+
+.calendar-day.other-month {
+    color: #ccc;
+}
+
+.calendar-day.has-events {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.event-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: var(--danger-color);
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.events-list {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.events-list h3 {
+    margin-bottom: 1.5rem;
+}
+
+.events-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.event-item {
+    background: var(--light-bg);
+    padding: 1rem;
+    border-left: 4px solid var(--primary-color);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.event-item:hover {
+    box-shadow: var(--shadow);
+    transform: translateX(4px);
+}
+
+.event-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--dark-text);
+}
+
+.event-date {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.event-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+}
+
+/* ============================================
+   공지/메모
+   ============================================ */
+.bulletin-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.bulletin-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.bulletin-item {
+    background: #f6f7d7;
+    color: #2c3e50;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.bulletin-item:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.bulletin-item:nth-child(3n + 1) {
+    background: #f6f7d7; /* 연노랑 */
+}
+.bulletin-item:nth-child(3n + 2) {
+    background: #d7f7f6; /* 연민트 */
+}
+.bulletin-item:nth-child(3n) {
+    background: #f7d7e6; /* 연핑크 */
+}
+
+.bulletin-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    margin-bottom: 0.5rem;
+}
+
+.bulletin-header:hover .bulletin-title {
+    color: var(--primary-color);
+}
+
+.bulletin-toggle {
+    font-size: 0.8rem;
+    color: #666;
+    transition: transform 0.3s ease;
+}
+
+.bulletin-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.8rem;
+    margin: 0;
+}
+
+.bulletin-date {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-bottom: 1rem;
+}
+
+.bulletin-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+    word-break: break-word;
+    white-space: pre-line;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.bulletin-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0;
+}
+
+.bulletin-content:not(.collapsed) {
+    max-height: 1000px; /* 충분히 큰 값 */
+    opacity: 1;
+}
+
+/* 마크다운 스타일 개선 */
+.bulletin-content p {
+    margin: 0.5em 0;
+}
+.bulletin-content ul, .bulletin-content ol {
+    margin: 0.5em 0 0.5em 1.2em;
+}
+.bulletin-content code {
+    background: #f3f3f3;
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-size: 0.95em;
+}
+.bulletin-content a {
+    color: #0077cc;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.bulletin-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.bulletin-actions.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+}
+
+.bulletin-actions:not(.collapsed) {
+    max-height: 100px;
+    opacity: 1;
+}
+
+.bulletin-actions .btn-small {
+    color: #2c3e50 !important;
+    background: rgba(255,255,255,0.7) !important;
+    border: 1px solid #e1e8ed;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.bulletin-actions .btn-small:hover {
+    background: #f3f3f3 !important;
+    color: #5468ff !important;
+    border-color: #5468ff;
+}
+
+/* ============================================
+   스케줄 멤버 탭
+   ============================================ */
+.member-tab-wrapper {
+    margin-bottom: 1rem;
+}
+
+.member-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.member-tab {
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.member-tab.active,
+.member-tab:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.schedule-tab-info {
+    color: #666;
+    font-size: 0.95rem;
+    padding: 0.6rem 0;
+}
+
+.schedule-timetable-wrapper {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.schedule-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.schedule-card {
+    position: absolute;
+    box-sizing: border-box;
+    border-radius: 12px;
+    padding: 0.75rem;
+    color: #2c3e50;
+    box-shadow: var(--shadow);
+    pointer-events: auto;
+    overflow: hidden;
+    font-size: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    word-break: break-word;
+}
+
+.schedule-card-close {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.12);
+    color: #2c3e50;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+}
+
+.schedule-card-close:hover {
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.schedule-card-activity {
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.4rem;
+    white-space: normal;
+}
+
+.schedule-card-time {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-bottom: 0.4rem;
+}
+
+.schedule-detail-item {
+    margin-bottom: 0.9rem;
+    font-size: 0.95rem;
+}
+
+.timetable-day-header {
+    padding: 0.9rem 0.6rem;
+}
+
+@media (max-width: 992px) {
+    .schedule-card {
+        padding: 0.85rem;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+    .schedule-card-activity {
+        font-size: 0.95rem;
+    }
+    .schedule-card-time {
+        font-size: 0.8rem;
+    }
+    .schedule-card-close {
+        width: 22px;
+        height: 22px;
+        font-size: 0.8rem;
+    }
+    .timetable th,
+    .timetable td {
+        padding: 0.5rem;
+        font-size: 0.8rem;
+    }
+    .timetable-row {
+        height: 36px;
+    }
+    .timetable-time-header,
+    .timetable-time {
+        width: 60px;
+    }
+    .schedule-card {
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .schedule-timetable-wrapper {
+        overflow-x: visible;
+    }
+    .timetable {
+        width: 100%;
+        table-layout: fixed;
+        min-width: auto;
+    }
+    .timetable th,
+    .timetable td {
+        padding: 0.25rem;
+    }
+    .timetable-time-header,
+    .timetable-time {
+        width: 40px;
+    }
+    .schedule-card {
+        align-items: flex-start;
+        text-align: left;
+    }
+    .schedule-card-time {
+        display: none;
+    }
+    .schedule-card.expanded .schedule-card-time {
+        display: block;
+    }
+    .schedule-card-activity {
+        font-size: 0.95rem;
+    }
+    .schedule-card-close {
+        top: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .schedule-card {
+        padding: 0.75rem;
+        font-size: 0.88rem;
+    }
+    .schedule-card-activity {
+        font-size: 0.9rem;
+    }
+    .schedule-card-time {
+        font-size: 0.75rem;
+    }
+    .timetable th,
+    .timetable td {
+        padding: 0.35rem;
+        font-size: 0.75rem;
+    }
+    .timetable-row {
+        height: 34px;
+    }
+    .timetable-time-header,
+    .timetable-time {
+        width: 50px;
+    }
+    .timetable-day-header {
+        font-size: 0.8rem;
+    }
+    .schedule-card-close {
+        top: 4px;
+        right: 4px;
+        width: 20px;
+        height: 20px;
+        font-size: 0.75rem;
+    }
+}
+
+/* ============================================
+   타임테이블
+   ============================================ */
+.timetable {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-top: 1.5rem;
+}
+
+.timetable th,
+.timetable td {
+    border: 1px solid var(--border-color);
+    padding: 0.8rem;
+    text-align: center;
+    vertical-align: top;
+}
+
+.timetable-header th {
+    background: var(--primary-color);
+    color: white;
+    font-weight: bold;
+    padding: 1rem 0.8rem;
+}
+
+.timetable-time-header,
+.timetable-time {
+    width: 80px;
+    background: var(--light-bg);
+    font-weight: bold;
+}
+
+.timetable-day-header {
+    font-weight: bold;
+    background: var(--primary-color);
+    color: white;
+}
+
+.timetable-row {
+    height: 40px;
+}
+
+.timetable-slot {
+    background: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    height: 40px;
+}
+
+.timetable-slot:hover {
+    background: var(--light-bg);
+}
+
+.timetable-slot.has-schedule {
+    background: white;
+    color: inherit;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.schedule-in-cell {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 0.8rem;
+}
+
+.schedule-block {
+    margin-bottom: 0.5rem;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 0.7rem;
+}
+
+.schedule-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.schedule-name {
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.schedule-time {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.schedule-activity {
+    font-size: 0.85rem;
+    margin: 0.2rem 0;
+}
+
+.schedule-actions {
+    margin-top: 0.3rem;
+}
+
+.schedule-in-cell .schedule-name {
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+}
+
+.schedule-in-cell .schedule-activity {
+    font-size: 0.8rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.schedule-in-cell .schedule-actions {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.timetable-slot:hover .schedule-actions {
+    opacity: 1;
+}
+
+/* ============================================
+   할일 리스트
+   ============================================ */
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: white;
+    border: 2px solid var(--border-color);
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.todo-list {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.todo-item:last-child {
+    border-bottom: none;
+}
+
+.todo-item:hover {
+    background: var(--light-bg);
+}
+
+.todo-checkbox {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.todo-content {
+    flex: 1;
+}
+
+.todo-title {
+    font-weight: 500;
+    margin-bottom: 0.3rem;
+}
+
+.todo-meta {
+    font-size: 0.85rem;
+    color: #999;
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.todo-priority {
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+}
+
+.todo-priority.high {
+    background: var(--danger-color);
+}
+
+.todo-priority.medium {
+    background: var(--warning-color);
+}
+
+.todo-priority.low {
+    background: var(--success-color);
+}
+
+.todo-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* ============================================
+   쇼핑 리스트
+   ============================================ */
+.shopping-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.shopping-list {
+    margin-bottom: 1.5rem;
+}
+
+.shopping-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.shopping-item:hover {
+    background: var(--light-bg);
+}
+
+.shopping-item-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.shopping-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.shopping-details {
+    flex: 1;
+}
+
+.shopping-item-name {
+    font-weight: 500;
+}
+
+.shopping-item-category {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.3rem;
+}
+
+.shopping-price {
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0 1rem;
+}
+
+.shopping-stats {
+    border-top: 2px solid var(--border-color);
+    padding-top: 1rem;
+    text-align: right;
+    font-size: 1.1rem;
+}
+
+/* ============================================
+   날씨
+   ============================================ */
+.weather-search {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.weather-input {
+    flex: 1;
+    max-width: 300px;
+}
+
+.weather-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.weather-loading,
+.weather-error {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.weather-error {
+    color: var(--danger-color);
+}
+
+.weather-main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.weather-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.weather-icon {
+    font-size: 4rem;
+}
+
+.weather-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.weather-location {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--dark-text);
+}
+
+.weather-temp {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.weather-description {
+    color: #666;
+    font-size: 1rem;
+}
+
+.weather-forecast {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+}
+
+.forecast-item {
+    background: var(--light-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.forecast-day {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.forecast-icon {
+    font-size: 2rem;
+    margin: 0.5rem 0;
+}
+
+.forecast-temp {
+    font-size: 0.9rem;
+    color: var(--primary-color);
+}
+
+/* ============================================
+   반응형 디자인
+   ============================================ */
+@media (max-width: 768px) {
+    .tab-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .tab-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .calendar-container {
+        grid-template-columns: 1fr;
+    }
+
+    .weather-main {
+        grid-template-columns: 1fr;
+    }
+
+    .bulletin-list {
+        grid-template-columns: 1fr;
+    }
+
+    .schedule-list {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        max-width: 90%;
+        margin: 1rem;
+    }
+
+    .logo {
+        font-size: 1.3rem;
+    }
+
+    .tab-btn {
+        padding: 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 0.8rem;
+    }
+
+    .tab-header h2 {
+        font-size: 1.2rem;
+    }
+
+    .logo {
+        font-size: 1rem;
+    }
+
+    .user-name {
+        display: none;
+    }
+
+    .tab-nav {
+        overflow-x: auto;
+    }
+
+    .weather-forecast {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ============================================
+   유틸리티
+   ============================================ */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #999;
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.mt-1 { margin-top: 1rem; }
+.mb-1 { margin-bottom: 1rem; }
+.mt-2 { margin-top: 2rem; }
+.mb-2 { margin-bottom: 2rem; }

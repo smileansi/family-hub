@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>패밀리 허브 - 가족 일정 관리</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+    <!-- 메모/공지 수정 모달 -->
+    <div id="editBulletinModal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="editBulletinClose">&times;</span>
+            <h2>메모/공지 수정</h2>
+            <form id="editBulletinForm">
+                <input type="text" id="editBulletinTitle" placeholder="제목" required>
+                <textarea id="editBulletinContent" placeholder="내용을 입력하세요 (마크다운 지원)" rows="5" required></textarea>
+                <div style="font-size: 0.9em; color: #888; margin-bottom: 8px;">
+                    <b>마크다운 사용 예시:</b> <br>
+                    <code>**굵게**</code>, <code>*기울임*</code>, <code>- 리스트</code>, <code>[링크](https://example.com)</code>
+                </div>
+                <button type="submit" class="btn btn-primary">저장</button>
+            </form>
+        </div>
+    </div>
+    <!-- 네비게이션 헤더 -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo"><i class="fas fa-home"></i> 패밀리 허브</h1>
+                <div class="header-right">
+                    <span id="userName" class="user-name"></span>
+                    <button id="logoutBtn" class="btn btn-logout" style="display:none;">로그아웃</button>
+                    <button id="loginBtn" class="btn btn-primary" style="display:none;">로그인</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 탭 네비게이션 -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="calendar"><span class="tab-icon"><i class="fas fa-calendar"></i></span> 일정</button>
+        <button class="tab-btn" data-tab="bulletin"><span class="tab-icon"><i class="fas fa-sticky-note"></i></span> 메모</button>
+        <button class="tab-btn" data-tab="schedule"><span class="tab-icon"><i class="fas fa-clock"></i></span> 시간표</button>
+        <button class="tab-btn" data-tab="todos"><span class="tab-icon"><i class="fas fa-list-check"></i></span> 할일</button>
+        <button class="tab-btn" data-tab="shopping"><span class="tab-icon"><i class="fas fa-shopping-cart"></i></span> 쇼핑</button>
+        <button class="tab-btn" data-tab="weather"><span class="tab-icon"><i class="fas fa-cloud-sun"></i></span> 날씨</button>
+    </nav>
+
+    <main class="container">
+        <!-- 1. 캘린더 & 일정 탭 -->
+        <section id="calendar" class="tab-content active">
+            <div class="tab-header">
+                <h2><i class="fas fa-calendar-alt"></i> 가족 일정</h2>
+                <button class="btn btn-primary" id="addEventBtn">+ 일정 추가</button>
+            </div>
+
+            <!-- 미니 캘린더 -->
+            <div class="calendar-container">
+                <div class="mini-calendar">
+                    <div class="calendar-header">
+                        <button id="prevMonth">&lt;</button>
+                        <h3 id="currentMonth"></h3>
+                        <button id="nextMonth">&gt;</button>
+                    </div>
+                    <div class="calendar-grid" id="calendarGrid"></div>
+                </div>
+
+                <!-- 일정 리스트 -->
+                <div class="events-list">
+                    <h3>이번 달 일정</h3>
+                    <div id="eventsList" class="events-container"></div>
+                </div>
+            </div>
+
+            <!-- 일정 추가 모달 -->
+            <div id="eventModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>일정 추가</h2>
+                    <form id="eventForm">
+                        <input type="text" id="eventTitle" placeholder="일정 제목" required>
+                        <input type="date" id="eventDate" required>
+                        <input type="time" id="eventTime">
+                        <textarea id="eventDesc" placeholder="상세 내용" rows="3"></textarea>
+                        <select id="eventFamily">
+                            <option value="">가족 멤버 선택</option>
+                            <option value="전체">전체</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 메모 탭 -->
+        <section id="bulletin" class="tab-content">
+            <div class="tab-header">
+                <h2><i class="fas fa-thumbtack"></i>메모</h2>
+                <button class="btn btn-primary" id="addBulletinBtn">+ 메모 작성</button>
+            </div>
+
+            <div class="bulletin-container">
+                <div id="bulletinList" class="bulletin-list"></div>
+            </div>
+
+            <!-- 메모 추가 모달 -->
+            <div id="bulletinModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>메모/공지 작성</h2>
+                    <form id="bulletinForm">
+                        <input type="text" id="bulletinTitle" placeholder="제목" required>
+                        <textarea id="bulletinContent" placeholder="내용을 입력하세요 (마크다운 지원)" rows="5" required></textarea>
+                        <div style="font-size: 0.9em; color: #888; margin-bottom: 8px;">
+                            <b>마크다운 사용 예시:</b> <br>
+                            <code>**굵게**</code>, <code>*기울임*</code>, <code>- 리스트</code>, <code>[링크](https://example.com)</code>
+                        </div>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 시간표 탭 -->
+        <section id="schedule" class="tab-content">
+            <div class="tab-header">
+                <h2><i class="fas fa-hourglass-end"></i> 아이들 시간표</h2>
+                <div>
+                    <button class="btn btn-secondary" id="addScheduleMemberBtn">+ 이름 추가</button>
+                    <button class="btn btn-primary" id="addScheduleBtn">+ 시간표 추가</button>
+                </div>
+            </div>
+
+            <div class="member-tab-wrapper">
+                <div id="scheduleMemberTabs" class="member-tabs"></div>
+            </div>
+
+            <div class="schedule-timetable-wrapper">
+                <div id="scheduleList" class="schedule-list"></div>
+                <div id="scheduleOverlay" class="schedule-overlay"></div>
+            </div>
+
+            <!-- 시간표 추가 모달 -->
+            <div id="scheduleModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>시간표 추가</h2>
+                    <form id="scheduleForm">
+                        <select id="scheduleDay" required>
+                            <option value="">요일 선택</option>
+                            <option value="월">월</option>
+                            <option value="화">화</option>
+                            <option value="수">수</option>
+                            <option value="목">목</option>
+                            <option value="금">금</option>
+                            <option value="토">토</option>
+                        </select>
+                        <div class="time-range">
+                            <input type="time" id="scheduleStartTime" required>
+                            <span> ~ </span>
+                            <input type="time" id="scheduleEndTime" required>
+                        </div>
+                        <input type="text" id="scheduleActivity" placeholder="활동 내용" required>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 시간표 상세 모달 -->
+            <div id="scheduleDetailModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2 id="scheduleDetailTitle">일정 상세</h2>
+                    <div class="schedule-detail-item"><strong>요일</strong> <span id="scheduleDetailDay"></span></div>
+                    <div class="schedule-detail-item"><strong>시간</strong> <span id="scheduleDetailTime"></span></div>
+                    <div class="schedule-detail-item"><strong>활동</strong> <span id="scheduleDetailActivity"></span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 할 일 탭 -->
+        <section id="todos" class="tab-content">
+            <div class="tab-header">
+                <h2><i class="fas fa-list-check"></i> 할 일 목록</h2>
+                <button class="btn btn-primary" id="addTodoBtn">+ 할일 추가</button>
+            </div>
+
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">전체</button>
+                <button class="filter-btn" data-filter="active">진행중</button>
+                <button class="filter-btn" data-filter="completed">완료</button>
+            </div>
+
+            <div id="todoList" class="todo-list"></div>
+
+            <!-- 할일 추가 모달 -->
+            <div id="todoModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>할 일 추가</h2>
+                    <form id="todoForm">
+                        <input type="text" id="todoTitle" placeholder="할 일 내용" required>
+                        <select id="todoAssignee">
+                            <option value="">담당자 선택</option>
+                        </select>
+                        <input type="date" id="todoDueDate" required>
+                        <select id="todoPriority">
+                            <option value="low">낮음</option>
+                            <option value="medium" selected>중간</option>
+                            <option value="high">높음</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 쇼핑 리스트 탭 -->
+        <section id="shopping" class="tab-content">
+            <div class="tab-header">
+                <h2><i class="fas fa-shopping-cart"></i> 쇼핑 리스트</h2>
+                <button class="btn btn-primary" id="addShoppingBtn">+ 아이템 추가</button>
+            </div>
+
+            <div class="shopping-container">
+                <div id="shoppingList" class="shopping-list"></div>
+                <div class="shopping-stats">
+                    <p>구매 예상액: <strong id="shoppingTotal">₩0</strong></p>
+                </div>
+            </div>
+
+            <!-- 쇼핑 아이템 추가 모달 -->
+            <div id="shoppingModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>쇼핑 아이템 추가</h2>
+                    <form id="shoppingForm">
+                        <input type="text" id="shoppingItem" placeholder="상품명" required>
+                        <input type="number" id="shoppingPrice" placeholder="가격" min="0">
+                        <input type="number" id="shoppingQty" placeholder="수량" value="1" min="1">
+                        <select id="shoppingCategory">
+                            <option value="식품">식품</option>
+                            <option value="의류">의류</option>
+                            <option value="생활용품">생활용품</option>
+                            <option value="전자제품">전자제품</option>
+                            <option value="기타">기타</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 날씨 탭 -->
+        <section id="weather" class="tab-content">
+            <div class="tab-header">
+                <h2><i class="fas fa-cloud-sun"></i> 날씨</h2>
+                <div class="weather-search">
+                    <input type="text" id="weatherLocation" placeholder="도시명 또는 지역" class="weather-input">
+                    <button id="weatherSearchBtn" class="btn btn-primary">검색</button>
+                </div>
+            </div>
+
+            <div id="weatherContainer" class="weather-container">
+                <div class="weather-loading">날씨 정보를 불러오는 중...</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Firebase 스크립트 -->
+    <script type="module" src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+{
+  "events": [],
+  "bulletins": [
+    {
+      "content": "**LG U+**\n#9C9853K65\n\n**304**\n1712K4ZVJ8",
+      "createdAt": "2026-04-12T07:47:38.404Z",
+      "createdBy": "안효석",
+      "id": 1775980058404,
+      "title": "집 와이파이 비밀번호"
+    },
+    {
+      "content": "가람초 앞 파리바케트 : 9988*\nGS슈퍼마켓 : 2402*\n총각네횟집 : 8888*\n솔보 도야족발 : 1166*\n신해센트럴 (사나포차) : 1867\n노브랜드/우미당/엄지네 남여 : 0003*\n다이소 : 남 1502 여 1642 (휴지없음)\n육시리 1층 : 남 2580 여 0852\n롯데리아/올리브영 : 남 3570 여 1590\n알파문고 : 2402*\n양계장집 : 남 6088*, 여 6087* \n이삭토스트 / 동인동  : 남 1470, 여 3690\n스타벅스 / 역전할매 : 남 : 1125 여 : 1225\n크라운호프/서촌먹태 : 2609* \n커피에반하다/60계 : 2848*\n연어나라 육회공주 : 3355*\n백다방 : 4444*\n새봄초앞 베스킨라빈스 : 1126*\n아도겐 : 7890\n김복남맥주 : 5971\n응봉집 : 4325\n오늘와인 : 남 5022 여 5182\n금별맥주 : 4325\n종로서적 : 6077\n아이맘약국 : 6416\n누나홀닭 : 여 : 1563\n공차 : 남 : 3636 여 : 8484\n철길집 : 2390\n불타는곱창 : 4112\n깡우동 : 2729 (공용)\n보배짬뽕 : 3636*\n신토불이 옛날통닭 : 남 : 9988 여 : 2244\n공만/감동짬뽕 : 열려있음 / 남 : 1314 여 : 1324\n누나홀닭/뿔난황소 : 남 :2941 / 여 : 2942\n디저트39 / 김밥천국 : 남 9876 / 여 5432\n빽다방 : 4444\n빅파이브 : 남 5022 / 여 5182\n한신포차 / 신의주 / 차돌풍 : 남 4750 / 여 6245 (열려있음)\n탑텐 : 2589(여) / 2578(남)\n데시앙 깐부치킨/세븐일레븐 9670*\n수내닭꼬치 : 0258남  0298여",
+      "createdAt": "2026-04-12T07:44:36.804Z",
+      "createdBy": "안효석",
+      "id": 1775979876804,
+      "title": "다산 화장실"
+    }
+  ],
+  "schedules": [
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:17:54.052Z",
+      "createdBy": "안효석",
+      "day": "월",
+      "endTime": "15:30",
+      "id": 1775981874052,
+      "member": "안도경",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:18:14.605Z",
+      "createdBy": "안효석",
+      "day": "화",
+      "endTime": "16:25",
+      "id": 1775981894605,
+      "member": "안도경",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:19:51.881Z",
+      "createdBy": "안효석",
+      "day": "수",
+      "endTime": "15:30",
+      "id": 1775981991881,
+      "member": "안도경",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:20:09.727Z",
+      "createdBy": "안효석",
+      "day": "목",
+      "endTime": "16:25",
+      "id": 1775982009727,
+      "member": "안도경",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:20:27.079Z",
+      "createdBy": "안효석",
+      "day": "금",
+      "endTime": "15:30",
+      "id": 1775982027079,
+      "member": "안도경",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "수학",
+      "createdAt": "2026-04-12T08:20:52.944Z",
+      "createdBy": "안효석",
+      "day": "월",
+      "endTime": "19:00",
+      "id": 1775982052944,
+      "member": "안도경",
+      "startTime": "17:00"
+    },
+    {
+      "activity": "영어",
+      "createdAt": "2026-04-12T08:21:15.061Z",
+      "createdBy": "안효석",
+      "day": "화",
+      "endTime": "20:25",
+      "id": 1775982075061,
+      "member": "안도경",
+      "startTime": "17:50"
+    },
+    {
+      "activity": "수학",
+      "createdAt": "2026-04-12T08:21:40.794Z",
+      "createdBy": "안효석",
+      "day": "수",
+      "endTime": "19:00",
+      "id": 1775982100794,
+      "member": "안도경",
+      "startTime": "17:00"
+    },
+    {
+      "activity": "영어",
+      "createdAt": "2026-04-12T08:22:06.461Z",
+      "createdBy": "안효석",
+      "day": "목",
+      "endTime": "20:25",
+      "id": 1775982126461,
+      "member": "안도경",
+      "startTime": "17:50"
+    },
+    {
+      "activity": "수학",
+      "createdAt": "2026-04-12T08:22:45.239Z",
+      "createdBy": "안효석",
+      "day": "금",
+      "endTime": "21:00",
+      "id": 1775982165239,
+      "member": "안도경",
+      "startTime": "19:00"
+    },
+    {
+      "activity": "플라톤",
+      "createdAt": "2026-04-12T08:23:20.442Z",
+      "createdBy": "안효석",
+      "day": "토",
+      "endTime": "16:00",
+      "id": 1775982200442,
+      "member": "안도경",
+      "startTime": "14:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:24:06.037Z",
+      "createdBy": "안효석",
+      "day": "월",
+      "endTime": "13:40",
+      "id": 1775982246037,
+      "member": "안수빈",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:24:19.616Z",
+      "createdBy": "안효석",
+      "day": "화",
+      "endTime": "13:40",
+      "id": 1775982259616,
+      "member": "안수빈",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:24:35.952Z",
+      "createdBy": "안효석",
+      "day": "수",
+      "endTime": "13:40",
+      "id": 1775982275952,
+      "member": "안수빈",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:24:58.413Z",
+      "createdBy": "안효석",
+      "day": "목",
+      "endTime": "14:30",
+      "id": 1775982298413,
+      "member": "안수빈",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "학교",
+      "createdAt": "2026-04-12T08:25:38.862Z",
+      "createdBy": "안효석",
+      "day": "금",
+      "endTime": "13:40",
+      "id": 1775982338862,
+      "member": "안수빈",
+      "startTime": "09:00"
+    },
+    {
+      "activity": "미술",
+      "createdAt": "2026-04-12T08:26:01.408Z",
+      "createdBy": "안효석",
+      "day": "월",
+      "endTime": "16:00",
+      "id": 1775982361408,
+      "member": "안수빈",
+      "startTime": "14:00"
+    },
+    {
+      "activity": "영어",
+      "createdAt": "2026-04-12T08:26:22.508Z",
+      "createdBy": "안효석",
+      "day": "월",
+      "endTime": "19:25",
+      "id": 1775982382508,
+      "member": "안수빈",
+      "startTime": "17:20"
+    },
+    {
+      "activity": "영어",
+      "createdAt": "2026-04-12T08:26:37.505Z",
+      "createdBy": "안효석",
+      "day": "수",
+      "endTime": "19:25",
+      "id": 1775982397505,
+      "member": "안수빈",
+      "startTime": "17:20"
+    },
+    {
+      "activity": "수학",
+      "createdAt": "2026-04-12T08:26:55.229Z",
+      "createdBy": "안효석",
+      "day": "화",
+      "endTime": "16:20",
+      "id": 1775982415229,
+      "member": "안수빈",
+      "startTime": "15:00"
+    },
+    {
+      "activity": "수학",
+      "createdAt": "2026-04-12T08:27:16.620Z",
+      "createdBy": "안효석",
+      "day": "목",
+      "endTime": "16:20",
+      "id": 1775982436620,
+      "member": "안수빈",
+      "startTime": "15:00"
+    },
+    {
+      "activity": "수학",
+      "createdAt": "2026-04-12T08:27:53.543Z",
+      "createdBy": "안효석",
+      "day": "금",
+      "endTime": "15:20",
+      "id": 1775982473543,
+      "member": "안수빈",
+      "startTime": "14:00"
+    },
+    {
+      "id": 1775984623465,
+      "member": "안도경",
+      "day": "금",
+      "startTime": "16:00",
+      "endTime": "17:10",
+      "activity": "바욜",
+      "createdBy": "안효석",
+      "createdAt": "2026-04-12T09:03:43.465Z"
+    }
+  ],
+  "scheduleMembers": [
+    "안도경",
+    "안수빈"
+  ],
+  "activeScheduleMember": "안도경",
+  "todos": [
+    {
+      "id": 1775984971808,
+      "title": "유럽 일정 잡기",
+      "assignee": "안효석",
+      "dueDate": "2026-04-30",
+      "priority": "medium",
+      "completed": false,
+      "createdBy": "안효석",
+      "createdAt": "2026-04-12T09:09:31.808Z"
+    }
+  ],
+  "shopping": [
+    {
+      "id": 1775984892112,
+      "item": "계란",
+      "price": 9000,
+      "qty": 1,
+      "category": "식품",
+      "purchased": false,
+      "createdBy": "안효석",
+      "createdAt": "2026-04-12T09:08:12.112Z"
+    },
+    {
+      "id": 1775984905410,
+      "item": "고추장",
+      "price": 3000,
+      "qty": 1,
+      "category": "식품",
+      "purchased": false,
+      "createdBy": "안효석",
+      "createdAt": "2026-04-12T09:08:25.410Z"
+    }
+  ]
+}
