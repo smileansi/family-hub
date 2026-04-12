@@ -3,11 +3,11 @@ Description=Family Hub Gunicorn Server
 After=network.target
 
 [Service]
-User=youruser
-Group=youruser
-WorkingDirectory=/home/youruser/family-hub
-Environment="PATH=/home/youruser/family-hub/venv/bin"
-ExecStart=/home/youruser/family-hub/venv/bin/gunicorn --workers 3 --bind unix:family-hub.sock -m 007 server:app
+User=smileansi
+Group=smileansi
+WorkingDirectory=/home/smileansi/family-hub/family-hub
+Environment="PATH=/home/smileansi/family-hub/family-hub/venv/bin"
+ExecStart=/home/smileansi/family-hub/family-hub/venv/bin/gunicorn --workers 3 --bind unix:family-hub.sock -m 007 server:app
 Restart=always
 
 [Install]
