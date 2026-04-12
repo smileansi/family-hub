@@ -149,10 +149,23 @@ async function syncDataFromServer() {
 
 // localStorage 데이터를 명시적으로 서버에 업로드
 async function uploadLocalDataToServer() {
+    // localStorage에 있는 데이터나, 없으면 현재 appState 사용
+    let dataToUpload;
     const saved = localStorage.getItem('familyHubData');
-    if (!saved) {
-        alert('로컬 데이터가 없습니다.');
-        return;
+    
+    if (saved) {
+        dataToUpload = JSON.parse(saved);
+    } else {
+        // localStorage에 없으면 현재 appState 업로드
+        dataToUpload = {
+            events: appState.events,
+            bulletins: appState.bulletins,
+            schedules: appState.schedules,
+            scheduleMembers: appState.scheduleMembers,
+            activeScheduleMember: appState.activeScheduleMember,
+            todos: appState.todos,
+            shopping: appState.shopping
+        };
     }
 
     const uploadBtn = document.getElementById('syncUploadBtn');
@@ -161,15 +174,14 @@ async function uploadLocalDataToServer() {
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 업로드 중...';
 
     try {
-        const localData = JSON.parse(saved);
         const response = await fetch(`${API_BASE_URL}/api/data`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(localData)
+            body: JSON.stringify(dataToUpload)
         });
 
         if (response.ok) {
-            alert('✅ 로컬 데이터가 서버에 업로드되었습니다.');
+            alert('✅ 데이터가 서버에 업로드되었습니다.');
             // 업로드 후 서버에서 다시 얻기
             const getResponse = await fetch(`${API_BASE_URL}/api/data`);
             if (getResponse.ok) {
@@ -256,11 +268,6 @@ function showAuthUI() {
         document.getElementById('userName').style.display = 'block';
         document.getElementById('loginBtn').style.display = 'none';
         document.getElementById('logoutBtn').style.display = 'block';
-        
-        // localStorage에 데이터가 있으면 업로드 버튼 표시
-        if (localStorage.getItem('familyHubData')) {
-            document.getElementById('syncUploadBtn').style.display = 'inline-block';
-        }
     }
 }
 
