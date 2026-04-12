@@ -147,6 +147,77 @@ async function syncDataFromServer() {
     }
 }
 
+// localStorage 데이터를 명시적으로 서버에 업로드
+async function uploadLocalDataToServer() {
+    const saved = localStorage.getItem('familyHubData');
+    if (!saved) {
+        alert('로컬 데이터가 없습니다.');
+        return;
+    }
+
+    const uploadBtn = document.getElementById('syncUploadBtn');
+    uploadBtn.classList.add('uploading');
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 업로드 중...';
+
+    try {
+        const localData = JSON.parse(saved);
+        const response = await fetch(`${API_BASE_URL}/api/data`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(localData)
+        });
+
+        if (response.ok) {
+            alert('✅ 로컬 데이터가 서버에 업로드되었습니다.');
+            // 업로드 후 서버에서 다시 얻기
+            const getResponse = await fetch(`${API_BASE_URL}/api/data`);
+            if (getResponse.ok) {
+                const data = await getResponse.json();
+                appState.events = data.events || [];
+                appState.bulletins = data.bulletins || [];
+                appState.schedules = data.schedules || [];
+                appState.scheduleMembers = data.scheduleMembers || [];
+                appState.activeScheduleMember = data.activeScheduleMember || '전체';
+                appState.todos = data.todos || [];
+                appState.shopping = data.shopping || [];
+                
+                // 현재 탭 다시 렌더링
+                const activeTab = document.querySelector('.tab-btn.active');
+                if (activeTab) {
+                    const tabName = activeTab.getAttribute('data-tab');
+                    switch(tabName) {
+                        case 'schedule':
+                            renderSchedules();
+                            renderScheduleMemberTabs();
+                            break;
+                        case 'bulletin':
+                            renderBulletins();
+                            break;
+                        case 'todos':
+                            renderTodos();
+                            break;
+                        case 'shopping':
+                            renderShopping();
+                            break;
+                        case 'calendar':
+                            renderCalendar();
+                            break;
+                    }
+                }
+            }
+        } else {
+            alert('❌ 업로드 실패했습니다. 다시 시도해주세요.');
+        }
+    } catch (e) {
+        alert('❌ 오류: ' + e.message);
+    } finally {
+        uploadBtn.classList.remove('uploading');
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> 업로드';
+    }
+}
+
 // ============================================
 // 인증 (임시: localStorage 기반)
 // ============================================
@@ -185,6 +256,11 @@ function showAuthUI() {
         document.getElementById('userName').style.display = 'block';
         document.getElementById('loginBtn').style.display = 'none';
         document.getElementById('logoutBtn').style.display = 'block';
+        
+        // localStorage에 데이터가 있으면 업로드 버튼 표시
+        if (localStorage.getItem('familyHubData')) {
+            document.getElementById('syncUploadBtn').style.display = 'inline-block';
+        }
     }
 }
 
@@ -1161,6 +1237,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3초마다 서버에서 최신 데이터 동기화
     setInterval(syncDataFromServer, 3000);
+
+    // 업로드 버튼
+    document.getElementById('syncUploadBtn').addEventListener('click', uploadLocalDataToServer);
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
 
