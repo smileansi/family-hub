@@ -27,6 +27,7 @@ async function loadLocalData() {
     if (saved) {
         try {
             const localData = JSON.parse(saved);
+            console.log('localStorage에서 로드할 데이터:', localData);
             // localStorage 데이터를 서버로 업로드
             await fetch(`${API_BASE_URL}/api/data`, {
                 method: 'POST',
@@ -35,7 +36,7 @@ async function loadLocalData() {
             });
             console.log('로컬 데이터를 서버로 동기화했습니다.');
         } catch (e) {
-            console.log('로컬 데이터 서버 업로드 실패');
+            console.log('로컬 데이터 서버 업로드 실패:', e);
         }
     }
     
@@ -44,6 +45,7 @@ async function loadLocalData() {
         const response = await fetch(`${API_BASE_URL}/api/data`);
         if (response.ok) {
             const data = await response.json();
+            console.log('서버에서 받은 초기 데이터:', data);
             appState.events = data.events || [];
             appState.bulletins = data.bulletins || [];
             appState.schedules = data.schedules || [];
@@ -51,10 +53,11 @@ async function loadLocalData() {
             appState.activeScheduleMember = data.activeScheduleMember || '전체';
             appState.todos = data.todos || [];
             appState.shopping = data.shopping || [];
+            console.log('시간표 로드됨:', appState.schedules.length, '개');
             return;
         }
     } catch (e) {
-        console.log('Server not available, using localStorage');
+        console.log('Server not available, using localStorage:', e);
     }
     
     // 서버 실패 시 localStorage 사용 (폴백)
@@ -100,6 +103,8 @@ async function syncDataFromServer() {
         const response = await fetch(`${API_BASE_URL}/api/data`);
         if (response.ok) {
             const data = await response.json();
+            console.log('동기화 받은 데이터:', data);
+            
             // 서버의 scheduleMembers와 다른지 확인
             const scheduleChanged = JSON.stringify(appState.scheduleMembers) !== JSON.stringify(data.scheduleMembers || []);
             const schedulesChanged = JSON.stringify(appState.schedules) !== JSON.stringify(data.schedules || []);
@@ -108,8 +113,13 @@ async function syncDataFromServer() {
             const shoppingChanged = JSON.stringify(appState.shopping) !== JSON.stringify(data.shopping || []);
             const eventsChanged = JSON.stringify(appState.events) !== JSON.stringify(data.events || []);
             
+            if (schedulesChanged) {
+                console.log('시간표 변경 감지: 기존', appState.schedules.length, '개 → 서버', data.schedules.length, '개');
+            }
+            
             // 데이터가 변경됨
             if (scheduleChanged || schedulesChanged || bulletsChanged || todosChanged || shoppingChanged || eventsChanged) {
+                console.log('데이터 업데이트 시작');
                 appState.events = data.events || [];
                 appState.bulletins = data.bulletins || [];
                 appState.schedules = data.schedules || [];
@@ -122,6 +132,7 @@ async function syncDataFromServer() {
                 const activeTab = document.querySelector('.tab-btn.active');
                 if (activeTab) {
                     const tabName = activeTab.getAttribute('data-tab');
+                    console.log('활성 탭:', tabName);
                     switch(tabName) {
                         case 'schedule':
                             renderSchedules();
@@ -143,7 +154,7 @@ async function syncDataFromServer() {
             }
         }
     } catch (e) {
-        console.log('Sync check failed - using local data');
+        console.log('Sync check failed:', e);
     }
 }
 
