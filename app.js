@@ -77,6 +77,59 @@ async function saveLocalData() {
     }
 }
 
+// 주기적으로 서버에서 최신 데이터 가져오기 (실시간 동기화)
+async function syncDataFromServer() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/data`);
+        if (response.ok) {
+            const data = await response.json();
+            // 서버의 scheduleMembers와 다른지 확인
+            const scheduleChanged = JSON.stringify(appState.scheduleMembers) !== JSON.stringify(data.scheduleMembers || []);
+            const schedulesChanged = JSON.stringify(appState.schedules) !== JSON.stringify(data.schedules || []);
+            const bulletsChanged = JSON.stringify(appState.bulletins) !== JSON.stringify(data.bulletins || []);
+            const todosChanged = JSON.stringify(appState.todos) !== JSON.stringify(data.todos || []);
+            const shoppingChanged = JSON.stringify(appState.shopping) !== JSON.stringify(data.shopping || []);
+            const eventsChanged = JSON.stringify(appState.events) !== JSON.stringify(data.events || []);
+            
+            // 데이터가 변경됨
+            if (scheduleChanged || schedulesChanged || bulletsChanged || todosChanged || shoppingChanged || eventsChanged) {
+                appState.events = data.events || [];
+                appState.bulletins = data.bulletins || [];
+                appState.schedules = data.schedules || [];
+                appState.scheduleMembers = data.scheduleMembers || [];
+                appState.activeScheduleMember = data.activeScheduleMember || '전체';
+                appState.todos = data.todos || [];
+                appState.shopping = data.shopping || [];
+                
+                // UI 업데이트
+                const activeTab = document.querySelector('.tab-btn.active');
+                if (activeTab) {
+                    const tabName = activeTab.getAttribute('data-tab');
+                    switch(tabName) {
+                        case 'schedule':
+                            renderSchedules();
+                            break;
+                        case 'bulletin':
+                            renderBulletins();
+                            break;
+                        case 'todos':
+                            renderTodos();
+                            break;
+                        case 'shopping':
+                            renderShopping();
+                            break;
+                        case 'calendar':
+                            renderCalendar();
+                            break;
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.log('Sync check failed - using local data');
+    }
+}
+
 // ============================================
 // 인증 (임시: localStorage 기반)
 // ============================================
@@ -1088,6 +1141,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderShopping();
     initWeather();
     setupInfoModal('scheduleDetailModal');
+
+    // 3초마다 서버에서 최신 데이터 동기화
+    setInterval(syncDataFromServer, 3000);
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
 
