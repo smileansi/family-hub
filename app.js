@@ -158,98 +158,6 @@ async function syncDataFromServer() {
     }
 }
 
-// localStorage 데이터를 명시적으로 서버에 업로드
-async function uploadLocalDataToServer() {
-    // localStorage에 있는 데이터나, 없으면 현재 appState 사용
-    let dataToUpload;
-    const saved = localStorage.getItem('familyHubData');
-    
-    if (saved) {
-        dataToUpload = JSON.parse(saved);
-    } else {
-        // localStorage에 없으면 현재 appState 업로드
-        dataToUpload = {
-            events: appState.events,
-            bulletins: appState.bulletins,
-            schedules: appState.schedules,
-            scheduleMembers: appState.scheduleMembers,
-            activeScheduleMember: appState.activeScheduleMember,
-            todos: appState.todos,
-            shopping: appState.shopping
-        };
-    }
-
-    console.log('업로드할 데이터:', dataToUpload);
-    console.log('현재 시간표:', appState.schedules);
-
-    const uploadBtn = document.getElementById('syncUploadBtn');
-    uploadBtn.classList.add('uploading');
-    uploadBtn.disabled = true;
-    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 업로드 중...';
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/data`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataToUpload)
-        });
-
-        console.log('서버 응답 상태:', response.status);
-        const responseText = await response.text();
-        console.log('서버 응답:', responseText);
-
-        if (response.ok) {
-            alert('✅ 데이터가 서버에 업로드되었습니다.\n시간표: ' + dataToUpload.schedules.length + '개\n시간표멤버: ' + dataToUpload.scheduleMembers.length + '명');
-            // 업로드 후 서버에서 다시 얻기
-            const getResponse = await fetch(`${API_BASE_URL}/api/data`);
-            if (getResponse.ok) {
-                const data = await getResponse.json();
-                console.log('서버에서 받은 데이터:', data);
-                appState.events = data.events || [];
-                appState.bulletins = data.bulletins || [];
-                appState.schedules = data.schedules || [];
-                appState.scheduleMembers = data.scheduleMembers || [];
-                appState.activeScheduleMember = data.activeScheduleMember || '전체';
-                appState.todos = data.todos || [];
-                appState.shopping = data.shopping || [];
-                
-                // 현재 탭 다시 렌더링
-                const activeTab = document.querySelector('.tab-btn.active');
-                if (activeTab) {
-                    const tabName = activeTab.getAttribute('data-tab');
-                    switch(tabName) {
-                        case 'schedule':
-                            renderSchedules();
-                            renderScheduleMemberTabs();
-                            break;
-                        case 'bulletin':
-                            renderBulletins();
-                            break;
-                        case 'todos':
-                            renderTodos();
-                            break;
-                        case 'shopping':
-                            renderShopping();
-                            break;
-                        case 'calendar':
-                            renderCalendar();
-                            break;
-                    }
-                }
-            }
-        } else {
-            alert('❌ 업로드 실패했습니다. 상태: ' + response.status);
-        }
-    } catch (e) {
-        alert('❌ 오류: ' + e.message);
-        console.error('업로드 오류:', e);
-    } finally {
-        uploadBtn.classList.remove('uploading');
-        uploadBtn.disabled = false;
-        uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> 업로드';
-    }
-}
-
 // ============================================
 // 인증 (임시: localStorage 기반)
 // ============================================
@@ -1264,9 +1172,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3초마다 서버에서 최신 데이터 동기화
     setInterval(syncDataFromServer, 3000);
-
-    // 업로드 버튼
-    document.getElementById('syncUploadBtn').addEventListener('click', uploadLocalDataToServer);
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
 
