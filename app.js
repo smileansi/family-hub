@@ -1214,6 +1214,7 @@ async function fetchWeather(location) {
             `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&language=ko`
         );
         const geoData = await geoResponse.json();
+        console.log('지오코딩 응답:', geoData);
 
         if (!geoData.results || geoData.results.length === 0) {
             container.innerHTML = '<div class="weather-error">도시를 찾을 수 없습니다. 다시 입력해주세요.</div>';
@@ -1221,10 +1222,25 @@ async function fetchWeather(location) {
         }
 
         const place = geoData.results[0];
+        console.log('선택된 위치:', place);
+        
         const weatherResponse = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code,weather_description&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
+            `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
         );
         const weatherData = await weatherResponse.json();
+        console.log('날씨 API 응답:', weatherData);
+
+        if (weatherData.error) {
+            console.error('API 에러:', weatherData.error);
+            container.innerHTML = '<div class="weather-error">API 요청 실패: ' + weatherData.error + '</div>';
+            return;
+        }
+
+        if (!weatherData.current) {
+            console.error('날씨 데이터 형식 오류:', weatherData);
+            container.innerHTML = '<div class="weather-error">날씨 데이터를 파싱할 수 없습니다.</div>';
+            return;
+        }
 
         localStorage.setItem('weatherLocation', location);
         renderWeather(weatherData, place);
@@ -1236,6 +1252,13 @@ async function fetchWeather(location) {
 
 function renderWeather(data, place) {
     const container = document.getElementById('weatherContainer');
+    
+    if (!data || !data.current) {
+        console.error('날씨 데이터 없음:', data);
+        container.innerHTML = '<div class="weather-error">날씨 데이터를 표시할 수 없습니다.</div>';
+        return;
+    }
+
     const current = data.current;
     const daily = data.daily;
 
@@ -1243,15 +1266,19 @@ function renderWeather(data, place) {
     const weatherIcon = getWeatherIcon(current.weather_code);
 
     let forecast = '';
-    for (let i = 1; i < 5; i++) {
-        const icon = getWeatherIcon(daily.weather_code[i]);
-        forecast += `
-            <div class="forecast-item">
-                <div class="forecast-day">${new Date(daily.time[i]).toLocaleDateString('ko-KR', {weekday: 'short'})}</div>
-                <div class="forecast-icon">${icon}</div>
-                <div class="forecast-temp">${daily.temperature_2m_max[i]}°/${daily.temperature_2m_min[i]}°</div>
-            </div>
-        `;
+    if (daily && daily.time && daily.weather_code) {
+        for (let i = 1; i < 5 && i < daily.time.length; i++) {
+            const icon = getWeatherIcon(daily.weather_code[i]);
+            const maxTemp = daily.temperature_2m_max ? daily.temperature_2m_max[i] : '--';
+            const minTemp = daily.temperature_2m_min ? daily.temperature_2m_min[i] : '--';
+            forecast += `
+                <div class="forecast-item">
+                    <div class="forecast-day">${new Date(daily.time[i]).toLocaleDateString('ko-KR', {weekday: 'short'})}</div>
+                    <div class="forecast-icon">${icon}</div>
+                    <div class="forecast-temp">${maxTemp}°/${minTemp}°</div>
+                </div>
+            `;
+        }
     }
 
     container.innerHTML = `
