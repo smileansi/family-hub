@@ -21,11 +21,11 @@ sudo systemctl enable family-hub
 sudo systemctl start family-hub
 
 # Configure nginx
+sudo systemctl stop nginx
 sudo cp nginx.conf /etc/nginx/sites-available/family-hub
 sudo rm -f /etc/nginx/sites-enabled/family-hub
 sudo ln -s /etc/nginx/sites-available/family-hub /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl restart nginx
+sudo nginx -t && sudo systemctl start nginx
 
 # Get SSL certificate (optional)
 # sudo certbot --nginx -d smileansi.com
