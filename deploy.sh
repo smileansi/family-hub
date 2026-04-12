@@ -28,6 +28,6 @@ sudo nginx -t
 sudo systemctl restart nginx
 
 # Get SSL certificate (optional)
-# sudo certbot --nginx -d yourdomain.com
+# sudo certbot --nginx -d smileansi.com
 
-echo "Deployment complete. Access at http://yourdomain.com"
+echo "Deployment complete. Access at http://smileansi.com"
