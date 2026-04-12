@@ -22,6 +22,24 @@ const appState = {
 
 // LocalStorage에서 데이터 로드
 async function loadLocalData() {
+    // 먼저 localStorage의 데이터를 서버로 업로드 (있으면)
+    const saved = localStorage.getItem('familyHubData');
+    if (saved) {
+        try {
+            const localData = JSON.parse(saved);
+            // localStorage 데이터를 서버로 업로드
+            await fetch(`${API_BASE_URL}/api/data`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(localData)
+            });
+            console.log('로컬 데이터를 서버로 동기화했습니다.');
+        } catch (e) {
+            console.log('로컬 데이터 서버 업로드 실패');
+        }
+    }
+    
+    // 그 다음 서버에서 데이터 가져오기
     try {
         const response = await fetch(`${API_BASE_URL}/api/data`);
         if (response.ok) {
@@ -39,8 +57,7 @@ async function loadLocalData() {
         console.log('Server not available, using localStorage');
     }
     
-    // 서버가 없으면 localStorage 사용 (폴백)
-    const saved = localStorage.getItem('familyHubData');
+    // 서버 실패 시 localStorage 사용 (폴백)
     if (saved) {
         const data = JSON.parse(saved);
         appState.events = data.events || [];
