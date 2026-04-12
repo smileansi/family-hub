@@ -1224,8 +1224,9 @@ async function fetchWeather(location) {
         const place = geoData.results[0];
         console.log('선택된 위치:', place);
         
+        // 현재, 시간별(24시간), 일별 날씨 데이터 요청
         const weatherResponse = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
+            `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
         );
         const weatherData = await weatherResponse.json();
         console.log('날씨 API 응답:', weatherData);
@@ -1260,18 +1261,41 @@ function renderWeather(data, place) {
     }
 
     const current = data.current;
+    const hourly = data.hourly;
     const daily = data.daily;
 
     const weatherDescription = getWeatherDescription(current.weather_code);
     const weatherIcon = getWeatherIcon(current.weather_code);
 
-    let forecast = '';
+    // 시간별 예보 (다음 24시간)
+    let hourlyForecast = '';
+    if (hourly && hourly.time && hourly.temperature_2m) {
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        for (let i = currentHour; i < currentHour + 24 && i < hourly.time.length; i++) {
+            const timeStr = hourly.time[i];
+            const hour = new Date(timeStr).getHours();
+            const temp = hourly.temperature_2m[i];
+            const icon = getWeatherIcon(hourly.weather_code[i]);
+            hourlyForecast += `
+                <div class="hourly-item">
+                    <div class="hourly-time">${hour}시</div>
+                    <div class="hourly-icon">${icon}</div>
+                    <div class="hourly-temp">${Math.round(temp)}°</div>
+                </div>
+            `;
+        }
+    }
+
+    // 일별 예보
+    let dailyForecast = '';
     if (daily && daily.time && daily.weather_code) {
         for (let i = 1; i < 5 && i < daily.time.length; i++) {
             const icon = getWeatherIcon(daily.weather_code[i]);
             const maxTemp = daily.temperature_2m_max ? daily.temperature_2m_max[i] : '--';
             const minTemp = daily.temperature_2m_min ? daily.temperature_2m_min[i] : '--';
-            forecast += `
+            dailyForecast += `
                 <div class="forecast-item">
                     <div class="forecast-day">${new Date(daily.time[i]).toLocaleDateString('ko-KR', {weekday: 'short'})}</div>
                     <div class="forecast-icon">${icon}</div>
@@ -1291,8 +1315,19 @@ function renderWeather(data, place) {
                     <div class="weather-description">${weatherDescription}</div>
                 </div>
             </div>
-            <div class="weather-forecast">
-                ${forecast}
+            
+            <div class="weather-section">
+                <div class="weather-section-title">📊 시간별 예보 (다음 24시간)</div>
+                <div class="hourly-forecast">
+                    ${hourlyForecast}
+                </div>
+            </div>
+            
+            <div class="weather-section">
+                <div class="weather-section-title">📅 일별 예보</div>
+                <div class="weather-forecast">
+                    ${dailyForecast}
+                </div>
             </div>
         </div>
     `;
