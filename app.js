@@ -54,6 +54,7 @@ async function loadLocalData() {
             appState.todos = data.todos || [];
             appState.shopping = data.shopping || [];
             console.log('시간표 로드됨:', appState.schedules.length, '개');
+            addKoreanHolidays(); // 한국 공휴일 추가
             return;
         }
     } catch (e) {
@@ -71,6 +72,7 @@ async function loadLocalData() {
         appState.todos = data.todos || [];
         appState.shopping = data.shopping || [];
     }
+    addKoreanHolidays(); // 한국 공휴일 추가
 }
 
 // LocalStorage에 데이터 저장
@@ -95,6 +97,48 @@ async function saveLocalData() {
         // 서버가 없으면 localStorage에 저장
         localStorage.setItem('familyHubData', JSON.stringify(data));
     }
+}
+
+// 한국 공휴일 추가
+function addKoreanHolidays() {
+    const koreanHolidays = [
+        { date: '2026-01-01', title: '신정' },
+        { date: '2026-02-16', title: '설날 (연휴)' },
+        { date: '2026-02-17', title: '설날' },
+        { date: '2026-02-18', title: '설날 (연휴)' },
+        { date: '2026-03-01', title: '삼일절' },
+        { date: '2026-04-15', title: '국회의원 선거일' },
+        { date: '2026-05-05', title: '어린이날' },
+        { date: '2026-05-15', title: '부처님오신날' },
+        { date: '2026-06-06', title: '현충일' },
+        { date: '2026-08-15', title: '광복절' },
+        { date: '2026-09-16', title: '추석 (연휴)' },
+        { date: '2026-09-17', title: '추석' },
+        { date: '2026-09-18', title: '추석 (연휴)' },
+        { date: '2026-10-03', title: '개천절' },
+        { date: '2026-10-09', title: '한글날' },
+        { date: '2026-12-25', title: '크리스마스' }
+    ];
+
+    // 기존 공휴일이 없으면 추가
+    koreanHolidays.forEach(holiday => {
+        const exists = appState.events.some(e => e.title === holiday.title && e.startDate === holiday.date);
+        if (!exists) {
+            appState.events.push({
+                id: Date.now() + Math.random(),
+                title: holiday.title,
+                startDate: holiday.date,
+                endDate: holiday.date,
+                allDay: true,
+                startTime: '',
+                endTime: '',
+                desc: '공휴일',
+                family: '전체',
+                isHoliday: true,
+                createdAt: new Date().toISOString()
+            });
+        }
+    });
 }
 
 // 주기적으로 서버에서 최신 데이터 가져오기 (실시간 동기화)
