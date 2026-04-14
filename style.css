@@ -470,6 +470,13 @@ form button[type="submit"] {
     gap: 0.5rem;
 }
 
+.calendar-day-header {
+    padding: 0.5rem;
+    font-weight: bold;
+    text-align: center;
+    color: var(--text-color);
+}
+
 .calendar-day {
     height: 40px;
     display: flex;
