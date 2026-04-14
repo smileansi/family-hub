@@ -409,14 +409,14 @@ function createCalendarDay(date, isOtherMonth, year, month) {
 }
 
 function getEventsOnDate(year, month, date) {
-    const targetDate = new Date(year, month, date);
-    const targetTime = targetDate.getTime();
+    // ISO 형식의 날짜 문자열로 비교 (시간대 문제 회피)
+    const pad = (n) => String(n).padStart(2, '0');
+    const targetDateStr = `${year}-${pad(month + 1)}-${pad(date)}`;
+    
     return appState.events.filter(event => {
-        const startDate = new Date(event.startDate || event.date);
-        const endDate = new Date(event.endDate || event.startDate || event.date);
-        const startTime = startDate.getTime();
-        const endTime = endDate.getTime();
-        return targetTime >= startTime && targetTime <= endTime;
+        const startDateStr = (event.startDate || event.date).slice(0, 10);
+        const endDateStr = (event.endDate || event.startDate || event.date).slice(0, 10);
+        return targetDateStr >= startDateStr && targetDateStr <= endDateStr;
     });
 }
 
