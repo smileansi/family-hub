@@ -410,10 +410,13 @@ function createCalendarDay(date, isOtherMonth, year, month) {
 
 function getEventsOnDate(year, month, date) {
     const targetDate = new Date(year, month, date);
+    const targetTime = targetDate.getTime();
     return appState.events.filter(event => {
         const startDate = new Date(event.startDate || event.date);
         const endDate = new Date(event.endDate || event.startDate || event.date);
-        return targetDate >= startDate && targetDate <= endDate;
+        const startTime = startDate.getTime();
+        const endTime = endDate.getTime();
+        return targetTime >= startTime && targetTime <= endTime;
     });
 }
 
@@ -459,7 +462,7 @@ function handleAddEvent() {
         id: Date.now(),
         title,
         startDate,
-        endDate,
+        endDate: endDate || startDate, // 명시적으로 설정
         allDay,
         startTime,
         endTime,
