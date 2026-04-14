@@ -1241,9 +1241,58 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 날씨 기능
 // ============================================
 function initWeather() {
-    // 기본 위치에서 날씨 표시
-    const defaultLocation = localStorage.getItem('weatherLocation') || '서울';
-    fetchWeather(defaultLocation);
+    // 현재 위치 기반 날씨 우선 조회 → 실패 시 저장된 위치 또는 기본값 사용
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
+            },
+            () => {
+                // 권한 거부 or 오류 → 폴백
+                fetchWeather(localStorage.getItem('weatherLocation') || '서울');
+            },
+            { timeout: 10000, maximumAge: 300000 }
+        );
+    } else {
+        fetchWeather(localStorage.getItem('weatherLocation') || '서울');
+    }
+}
+
+async function fetchWeatherByCoords(lat, lon) {
+    const container = document.getElementById('weatherContainer');
+    container.innerHTML = '<div class="weather-loading">현재 위치 날씨를 불러오는 중...</div>';
+
+    try {
+        // 역지오코딩으로 지역명 조회 (Nominatim)
+        const geoResp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ko`,
+            { headers: { 'Accept-Language': 'ko' } }
+        );
+        const geoData = await geoResp.json();
+        const addr = geoData.address || {};
+        const placeName = addr.city || addr.town || addr.village || addr.county || '현재 위치';
+        const place = {
+            name:      placeName,
+            admin1:    addr.state || '',
+            country:   addr.country || '',
+            latitude:  lat,
+            longitude: lon,
+        };
+
+        // 날씨 데이터 조회
+        const weatherResp = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+            `&current=temperature_2m,weather_code` +
+            `&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
+        );
+        const weatherData = await weatherResp.json();
+
+        if (weatherData.error) throw new Error(weatherData.error);
+        renderWeather(weatherData, place);
+    } catch (e) {
+        console.error('현재 위치 날씨 조회 실패:', e);
+        fetchWeather(localStorage.getItem('weatherLocation') || '서울');
+    }
 }
 
 async function fetchWeather(location) {
