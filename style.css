@@ -471,7 +471,7 @@ form button[type="submit"] {
 }
 
 .calendar-day {
-    aspect-ratio: 1;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
