@@ -1437,7 +1437,15 @@ form button[type="submit"] {
     }
 
     .weather-forecast {
-        grid-template-columns: repeat(3, 1fr);
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        padding-bottom: 0.5rem;
+    }
+
+    .forecast-item {
+        flex: 0 0 100px;
+        min-width: 100px;
     }
 }
 
