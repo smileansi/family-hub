@@ -315,6 +315,7 @@ function setupModal(modalId, btnId, formId, submitHandler) {
 let currentDate = new Date();
 
 function initCalendar() {
+    console.log('initCalendar called');
     updateCalendarView();
     document.getElementById('prevMonth').addEventListener('click', prevMonth);
     document.getElementById('nextMonth').addEventListener('click', nextMonth);
@@ -332,6 +333,7 @@ function nextMonth() {
 }
 
 function updateCalendarView() {
+    console.log('updateCalendarView called');
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
@@ -347,6 +349,7 @@ function updateCalendarView() {
     const prevLastDate = prevLastDay.getDate();
     
     const calendarGrid = document.getElementById('calendarGrid');
+    console.log('calendarGrid:', calendarGrid);
     calendarGrid.innerHTML = '';
     
     // 요일 헤더
@@ -359,6 +362,7 @@ function updateCalendarView() {
         dayHeader.style.textAlign = 'center';
         calendarGrid.appendChild(dayHeader);
     });
+    console.log('요일 헤더 추가됨');
     
     // 이전 달의 일자
     for (let i = prevLastDate - firstDayOfWeek + 1; i <= prevLastDate; i++) {
@@ -377,6 +381,7 @@ function updateCalendarView() {
         const dayDiv = createCalendarDay(i, true, year, month + 1);
         calendarGrid.appendChild(dayDiv);
     }
+    console.log('날짜 요소들 추가됨');
     
     // 일정 표시 업데이트
     renderEventsOnCalendar();
@@ -1227,12 +1232,18 @@ function updateShoppingTotal() {
 // 위젯 통합 범사
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOMContentLoaded fired');
     // 초기화
     await loadLocalData();
+    console.log('loadLocalData completed');
     initAuth();
+    console.log('initAuth completed');
     initTabs();
+    console.log('initTabs completed');
     setupModals();
+    console.log('setupModals completed');
     initCalendar();
+    console.log('initCalendar completed');
     initScheduleMembers();
     renderBulletins();
     renderSchedules();
