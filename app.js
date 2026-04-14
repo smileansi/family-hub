@@ -171,6 +171,7 @@ async function syncDataFromServer() {
                 appState.activeScheduleMember = data.activeScheduleMember || '전체';
                 appState.todos = data.todos || [];
                 appState.shopping = data.shopping || [];
+                addKoreanHolidays(); // 동기화 후에도 공휴일 유지
                 
                 // UI 업데이트
                 const activeTab = document.querySelector('.tab-btn.active');
@@ -437,11 +438,19 @@ function createCalendarDay(date, isOtherMonth, year, month) {
     // 이벤트가 있는 날짜 표시
     const eventsOnDay = getEventsOnDate(year, month, date);
     if (eventsOnDay.length > 0) {
-        dayDiv.classList.add('has-events');
-        const eventIndicator = document.createElement('div');
-        eventIndicator.className = 'event-indicator';
-        eventIndicator.textContent = eventsOnDay.length;
-        dayDiv.appendChild(eventIndicator);
+        const hasHoliday = eventsOnDay.some(e => e.isHoliday);
+        const normalEvents = eventsOnDay.filter(e => !e.isHoliday);
+        if (hasHoliday) {
+            dayDiv.classList.add('holiday');
+        } else {
+            dayDiv.classList.add('has-events');
+        }
+        if (normalEvents.length > 0) {
+            const eventIndicator = document.createElement('div');
+            eventIndicator.className = 'event-indicator';
+            eventIndicator.textContent = normalEvents.length;
+            dayDiv.appendChild(eventIndicator);
+        }
     }
     
     // 날짜 클릭 시 일정 보기 모달
@@ -481,12 +490,21 @@ function renderEventsOnCalendar() {
         
         if (!day.classList.contains('other-month')) {
             const eventsOnDay = getEventsOnDate(currentDate.getFullYear(), currentDate.getMonth(), date);
-            if (eventsOnDay.length > 0) {
+            const hasHoliday = eventsOnDay.some(e => e.isHoliday);
+            const normalEvents = eventsOnDay.filter(e => !e.isHoliday);
+            if (hasHoliday) {
+                day.classList.add('holiday');
+            } else {
+                day.classList.remove('holiday');
+            }
+            if (normalEvents.length > 0) {
                 day.classList.add('has-events');
                 const eventIndicator = document.createElement('div');
                 eventIndicator.className = 'event-indicator';
-                eventIndicator.textContent = eventsOnDay.length;
+                eventIndicator.textContent = normalEvents.length;
                 day.appendChild(eventIndicator);
+            } else {
+                day.classList.remove('has-events');
             }
         }
     });
@@ -529,18 +547,20 @@ function renderEvents() {
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
     
-    const filteredEvents = appState.events.filter(event => {
-        const startDate = new Date(event.startDate || event.date);
-        const endDate = new Date(event.endDate || event.startDate || event.date);
-        const eventStartMonth = startDate.getMonth();
-        const eventStartYear = startDate.getFullYear();
-        const eventEndMonth = endDate.getMonth();
-        const eventEndYear = endDate.getFullYear();
-        
-        // 일정이 현재 달과 겹치는지 확인
-        return (eventStartYear === currentYear && eventStartMonth === currentMonth) ||
-               (eventEndYear === currentYear && eventEndMonth === currentMonth) ||
-               (startDate <= new Date(currentYear, currentMonth + 1, 0) && endDate >= new Date(currentYear, currentMonth, 1));
+    const filteredEvents = appState.events
+        .filter(event => !event.isHoliday)
+        .filter(event => {
+            const startDate = new Date(event.startDate || event.date);
+            const endDate = new Date(event.endDate || event.startDate || event.date);
+            const eventStartMonth = startDate.getMonth();
+            const eventStartYear = startDate.getFullYear();
+            const eventEndMonth = endDate.getMonth();
+            const eventEndYear = endDate.getFullYear();
+            
+            // 일정이 현재 달과 겹치는지 확인
+            return (eventStartYear === currentYear && eventStartMonth === currentMonth) ||
+                   (eventEndYear === currentYear && eventEndMonth === currentMonth) ||
+                   (startDate <= new Date(currentYear, currentMonth + 1, 0) && endDate >= new Date(currentYear, currentMonth, 1));
     });
 
     const sortedEvents = filteredEvents.sort((a, b) => 

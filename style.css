@@ -522,6 +522,20 @@ form button[type="submit"] {
     color: #333;
 }
 
+.calendar-day.holiday {
+    background: #fff0f0;
+    color: #c0392b;
+    border-color: #f5c6cb;
+}
+
+.calendar-day.holiday:hover {
+    background: #ffe7e7;
+}
+
+.calendar-day.holiday .event-indicator {
+    display: none;
+}
+
 .event-indicator {
     position: absolute;
     top: 2px;
