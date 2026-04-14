@@ -107,7 +107,6 @@ function addKoreanHolidays() {
         { date: '2026-02-17', title: '설날' },
         { date: '2026-02-18', title: '설날 (연휴)' },
         { date: '2026-03-01', title: '삼일절' },
-        { date: '2026-04-15', title: '국회의원 선거일' },
         { date: '2026-05-05', title: '어린이날' },
         { date: '2026-05-15', title: '부처님오신날' },
         { date: '2026-06-06', title: '현충일' },
@@ -120,9 +119,18 @@ function addKoreanHolidays() {
         { date: '2026-12-25', title: '크리스마스' }
     ];
 
-    // 기존 공휴일이 없으면 추가
+    const holidayKey = (item) => `${item.date}|${item.title}`;
+    const officialHolidaySet = new Set(koreanHolidays.map(holidayKey));
+
+    // 잘못된 과거 공휴일 항목 정리
+    appState.events = appState.events.filter(event => {
+        if (!event.isHoliday) return true;
+        return officialHolidaySet.has(holidayKey({ date: event.startDate, title: event.title }));
+    });
+
+    // 공식 공휴일 추가
     koreanHolidays.forEach(holiday => {
-        const exists = appState.events.some(e => e.title === holiday.title && e.startDate === holiday.date);
+        const exists = appState.events.some(e => e.title === holiday.title && e.startDate === holiday.date && e.isHoliday);
         if (!exists) {
             appState.events.push({
                 id: Date.now() + Math.random(),
