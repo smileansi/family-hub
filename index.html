@@ -76,22 +76,12 @@
                 </div>
             </div>
 
-            <!-- 일정 추가 모달 -->
-            <div id="eventModal" class="modal">
+            <!-- 일정 보기 모달 -->
+            <div id="eventViewModal" class="modal">
                 <div class="modal-content">
                     <span class="close">&times;</span>
-                    <h2>일정 추가</h2>
-                    <form id="eventForm">
-                        <input type="text" id="eventTitle" placeholder="일정 제목" required>
-                        <input type="date" id="eventDate" required>
-                        <input type="time" id="eventTime">
-                        <textarea id="eventDesc" placeholder="상세 내용" rows="3"></textarea>
-                        <select id="eventFamily">
-                            <option value="">가족 멤버 선택</option>
-                            <option value="전체">전체</option>
-                        </select>
-                        <button type="submit" class="btn btn-primary">저장</button>
-                    </form>
+                    <h2 id="eventViewDate">일정 보기</h2>
+                    <div id="eventViewList" class="events-container"></div>
                 </div>
             </div>
         </section>

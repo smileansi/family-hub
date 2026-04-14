@@ -498,8 +498,8 @@ form button[type="submit"] {
 }
 
 .calendar-day.has-events {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
+    background: #e6f3ff;
+    color: #333;
 }
 
 .event-indicator {

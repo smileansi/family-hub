@@ -260,6 +260,13 @@ function setupModals() {
     // 이벤트 모달
     setupModal('eventModal', 'addEventBtn', 'eventForm', handleAddEvent);
     
+    // 종일 체크박스 이벤트
+    const allDayCheckbox = document.getElementById('eventAllDay');
+    const timeInputs = document.getElementById('timeInputs');
+    allDayCheckbox.addEventListener('change', () => {
+        timeInputs.style.display = allDayCheckbox.checked ? 'none' : 'flex';
+    });
+    
     // 공지 모달
     setupModal('bulletinModal', 'addBulletinBtn', 'bulletinForm', handleAddBulletin);
     
@@ -402,14 +409,20 @@ function createCalendarDay(date, isOtherMonth, year, month) {
         dayDiv.appendChild(eventIndicator);
     }
     
+    // 날짜 클릭 시 일정 보기 모달
+    dayDiv.addEventListener('click', () => {
+        showEventViewModal(year, month, date);
+    });
+    
     return dayDiv;
 }
 
 function getEventsOnDate(year, month, date) {
-    const targetDate = new Date(year, month, date).toDateString();
+    const targetDate = new Date(year, month, date);
     return appState.events.filter(event => {
-        const eventDate = new Date(event.date).toDateString();
-        return eventDate === targetDate;
+        const startDate = new Date(event.startDate || event.date);
+        const endDate = new Date(event.endDate || event.startDate || event.date);
+        return targetDate >= startDate && targetDate <= endDate;
     });
 }
 
@@ -443,19 +456,24 @@ function renderEventsOnCalendar() {
 
 function handleAddEvent() {
     const title = document.getElementById('eventTitle').value;
-    const date = document.getElementById('eventDate').value;
-    const time = document.getElementById('eventTime').value;
+    const startDate = document.getElementById('eventStartDate').value;
+    const endDate = document.getElementById('eventEndDate').value || startDate;
+    const allDay = document.getElementById('eventAllDay').checked;
+    const startTime = allDay ? '' : document.getElementById('eventStartTime').value;
+    const endTime = allDay ? '' : document.getElementById('eventEndTime').value;
     const desc = document.getElementById('eventDesc').value;
     const family = document.getElementById('eventFamily').value;
 
     const event = {
         id: Date.now(),
         title,
-        date,
-        time: time || '미정',
+        startDate,
+        endDate,
+        allDay,
+        startTime,
+        endTime,
         desc,
         family: family || '전체',
-        createdBy: appState.user.name,
         createdAt: new Date().toISOString()
     };
 
@@ -469,8 +487,26 @@ function renderEvents() {
     const eventsList = document.getElementById('eventsList');
     eventsList.innerHTML = '';
 
-    const sortedEvents = [...appState.events].sort((a, b) => 
-        new Date(a.date) - new Date(b.date)
+    // 현재 조회 중인 달의 일정만 필터링
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    
+    const filteredEvents = appState.events.filter(event => {
+        const startDate = new Date(event.startDate || event.date);
+        const endDate = new Date(event.endDate || event.startDate || event.date);
+        const eventStartMonth = startDate.getMonth();
+        const eventStartYear = startDate.getFullYear();
+        const eventEndMonth = endDate.getMonth();
+        const eventEndYear = endDate.getFullYear();
+        
+        // 일정이 현재 달과 겹치는지 확인
+        return (eventStartYear === currentYear && eventStartMonth === currentMonth) ||
+               (eventEndYear === currentYear && eventEndMonth === currentMonth) ||
+               (startDate <= new Date(currentYear, currentMonth + 1, 0) && endDate >= new Date(currentYear, currentMonth, 1));
+    });
+
+    const sortedEvents = filteredEvents.sort((a, b) => 
+        new Date(a.startDate) - new Date(b.startDate)
     );
 
     if (sortedEvents.length === 0) {
@@ -481,10 +517,14 @@ function renderEvents() {
     sortedEvents.forEach(event => {
         const eventDiv = document.createElement('div');
         eventDiv.className = 'event-item';
+        const timeDisplay = event.allDay ? '종일' : 
+            (event.startTime && event.endTime ? `${event.startTime} ~ ${event.endTime}` : 
+             (event.startTime || event.time || '시간 미정'));
+        const dateDisplay = (event.startDate || event.date) === (event.endDate || event.startDate || event.date) ? 
+            (event.startDate || event.date) : `${event.startDate || event.date} ~ ${event.endDate || event.startDate || event.date}`;
         eventDiv.innerHTML = `
             <div class="event-title">${event.title}</div>
-            <div class="event-date">📅 ${event.date} ${event.time}</div>
-            <div class="event-date">👤 ${event.createdBy}</div>
+            <div class="event-date">📅 ${dateDisplay} ${timeDisplay}</div>
             ${event.desc ? `<div class="event-date" style="margin-top: 0.5rem;">${event.desc}</div>` : ''}
             <div class="event-actions">
                 <button class="btn btn-small btn-danger" onclick="deleteEvent(${event.id})">삭제</button>
@@ -494,13 +534,44 @@ function renderEvents() {
     });
 }
 
-function deleteEvent(id) {
-    if (confirm('정말 삭제하시겠습니까?')) {
-        appState.events = appState.events.filter(e => e.id !== id);
-        saveLocalData();
-        renderEvents();
-        renderEventsOnCalendar(); // 캘린더에서도 제거
-    }
+function showEventViewModal(year, month, date) {
+    const eventsOnDay = getEventsOnDate(year, month, date);
+    if (eventsOnDay.length === 0) return;
+    
+    const modal = document.getElementById('eventViewModal');
+    const dateHeader = document.getElementById('eventViewDate');
+    const list = document.getElementById('eventViewList');
+    
+    dateHeader.textContent = `${year}년 ${month + 1}월 ${date}일 일정`;
+    list.innerHTML = '';
+    
+    eventsOnDay.forEach(event => {
+        const eventDiv = document.createElement('div');
+        eventDiv.className = 'event-item';
+        const timeDisplay = event.allDay ? '종일' : 
+            (event.startTime && event.endTime ? `${event.startTime} ~ ${event.endTime}` : 
+             (event.startTime || event.time || '시간 미정'));
+        const dateDisplay = (event.startDate || event.date) === (event.endDate || event.startDate || event.date) ? 
+            (event.startDate || event.date) : `${event.startDate || event.date} ~ ${event.endDate || event.startDate || event.date}`;
+        eventDiv.innerHTML = `
+            <div class="event-title">${event.title}</div>
+            <div class="event-date">📅 ${dateDisplay} ${timeDisplay}</div>
+            ${event.desc ? `<div class="event-date" style="margin-top: 0.5rem;">${event.desc}</div>` : ''}
+            <div class="event-actions">
+                <button class="btn btn-small btn-danger" onclick="deleteEvent(${event.id})">삭제</button>
+            </div>
+        `;
+        list.appendChild(eventDiv);
+    });
+    
+    modal.classList.add('show');
+    
+    // 모달 닫기
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.onclick = () => modal.classList.remove('show');
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.classList.remove('show');
+    };
 }
 
 // ============================================
