@@ -21,61 +21,35 @@ const appState = {
     currentFilter: 'all'
 };
 
-// LocalStorage에서 데이터 로드
+// 페이지 최초 접근 시 데이터 로드
+// 서버 우선 → 실패 시 localStorage 폴백
 async function loadLocalData() {
-    // 먼저 localStorage의 데이터를 서버로 업로드 (있으면)
-    const saved = localStorage.getItem('familyHubData');
-    if (saved) {
-        try {
-            const localData = JSON.parse(saved);
-            console.log('localStorage에서 로드할 데이터:', localData);
-            // localStorage 데이터를 서버로 업로드
-            await fetch(`${API_BASE_URL}/api/data`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(localData)
-            });
-            console.log('로컬 데이터를 서버로 동기화했습니다.');
-        } catch (e) {
-            console.log('로컬 데이터 서버 업로드 실패:', e);
+    const ok = await fetchAndUpdateFromServer();
+
+    if (ok) {
+        // 서버 로드 성공: 구 localStorage 잔여 데이터 제거
+        localStorage.removeItem('familyHubData');
+    } else {
+        // 서버 접근 불가 → localStorage 폴백
+        const saved = localStorage.getItem('familyHubData');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                appState.events    = data.events    || [];
+                appState.bulletins = data.bulletins || [];
+                appState.schedules = data.schedules || [];
+                appState.scheduleMembers      = data.scheduleMembers      || [];
+                appState.activeScheduleMember = data.activeScheduleMember || '전체';
+                appState.todos    = data.todos    || [];
+                appState.shopping = data.shopping || [];
+                removeLegacyAuthors();
+                removeLegacyHolidayEvents();
+            } catch (e) {
+                console.log('localStorage 파싱 오류:', e);
+            }
         }
     }
-    
-    // 그 다음 서버에서 데이터 가져오기
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/data`);
-        if (response.ok) {
-            const data = await response.json();
-            console.log('서버에서 받은 초기 데이터:', data);
-            appState.events = data.events || [];
-            appState.bulletins = data.bulletins || [];
-            appState.schedules = data.schedules || [];
-            appState.scheduleMembers = data.scheduleMembers || [];
-            appState.activeScheduleMember = data.activeScheduleMember || '전체';
-            appState.todos = data.todos || [];
-            appState.shopping = data.shopping || [];
-            removeLegacyAuthors();
-            console.log('시간표 로드됨:', appState.schedules.length, '개');
-            await fetchKoreanHolidays(new Date().getFullYear());
-            return;
-        }
-    } catch (e) {
-        console.log('Server not available, using localStorage:', e);
-    }
-    
-    // 서버 실패 시 localStorage 사용 (폴백)
-    if (saved) {
-        const data = JSON.parse(saved);
-        appState.events = data.events || [];
-        appState.bulletins = data.bulletins || [];
-        appState.schedules = data.schedules || [];
-        appState.scheduleMembers = data.scheduleMembers || [];
-        appState.activeScheduleMember = data.activeScheduleMember || '전체';
-        appState.todos = data.todos || [];
-        appState.shopping = data.shopping || [];
-        removeLegacyAuthors();
-        removeLegacyHolidayEvents();
-    }
+
     await fetchKoreanHolidays(new Date().getFullYear());
 }
 
@@ -113,66 +87,25 @@ async function saveLocalData() {
 // 한국 공휴일 추가
 
 
-// 주기적으로 서버에서 최신 데이터 가져오기 (실시간 동기화)
-async function syncDataFromServer() {
+// 서버에서 최신 데이터를 받아 appState를 갱신한다.
+// 페이지 접근(초기 로드) 및 탭 전환 시에만 호출된다.
+async function fetchAndUpdateFromServer() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/data`);
-        if (response.ok) {
-            const data = await response.json();
-            console.log('동기화 받은 데이터:', data);
-            
-            // 서버의 scheduleMembers와 다른지 확인
-            const scheduleChanged = JSON.stringify(appState.scheduleMembers) !== JSON.stringify(data.scheduleMembers || []);
-            const schedulesChanged = JSON.stringify(appState.schedules) !== JSON.stringify(data.schedules || []);
-            const bulletsChanged = JSON.stringify(appState.bulletins) !== JSON.stringify(data.bulletins || []);
-            const todosChanged = JSON.stringify(appState.todos) !== JSON.stringify(data.todos || []);
-            const shoppingChanged = JSON.stringify(appState.shopping) !== JSON.stringify(data.shopping || []);
-            const eventsChanged = JSON.stringify(appState.events) !== JSON.stringify(data.events || []);
-            
-            if (schedulesChanged) {
-                console.log('시간표 변경 감지: 기존', appState.schedules.length, '개 → 서버', data.schedules.length, '개');
-            }
-            
-            // 데이터가 변경됨
-            if (scheduleChanged || schedulesChanged || bulletsChanged || todosChanged || shoppingChanged || eventsChanged) {
-                console.log('데이터 업데이트 시작');
-                appState.events = data.events || [];
-                appState.bulletins = data.bulletins || [];
-                appState.schedules = data.schedules || [];
-                appState.scheduleMembers = data.scheduleMembers || [];
-                appState.activeScheduleMember = data.activeScheduleMember || '전체';
-                appState.todos = data.todos || [];
-                appState.shopping = data.shopping || [];
-                removeLegacyAuthors();
-                await fetchKoreanHolidays(currentDate.getFullYear());
-                
-                // UI 업데이트
-                const activeTab = document.querySelector('.tab-btn.active');
-                if (activeTab) {
-                    const tabName = activeTab.getAttribute('data-tab');
-                    console.log('활성 탭:', tabName);
-                    switch(tabName) {
-                        case 'schedule':
-                            renderSchedules();
-                            break;
-                        case 'bulletin':
-                            renderBulletins();
-                            break;
-                        case 'todos':
-                            renderTodos();
-                            break;
-                        case 'shopping':
-                            renderShopping();
-                            break;
-                        case 'calendar':
-                            renderCalendar();
-                            break;
-                    }
-                }
-            }
-        }
+        if (!response.ok) return false;
+        const data = await response.json();
+        appState.events    = data.events    || [];
+        appState.bulletins = data.bulletins || [];
+        appState.schedules = data.schedules || [];
+        appState.scheduleMembers      = data.scheduleMembers      || [];
+        appState.activeScheduleMember = data.activeScheduleMember || appState.activeScheduleMember || '전체';
+        appState.todos    = data.todos    || [];
+        appState.shopping = data.shopping || [];
+        removeLegacyAuthors();
+        return true;
     } catch (e) {
-        console.log('Sync check failed:', e);
+        console.log('서버 데이터 조회 실패 (오프라인 모드):', e);
+        return false;
     }
 }
 
@@ -188,21 +121,24 @@ function initTabs() {
     const tabContents = document.querySelectorAll('.tab-content');
 
     tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
+        button.addEventListener('click', async () => {
             try {
                 const tabName = button.getAttribute('data-tab');
-                
+
                 // 모든 탭 비활성화
                 tabButtons.forEach(btn => btn.classList.remove('active'));
                 tabContents.forEach(content => content.classList.remove('active'));
-                
+
                 // 선택된 탭 활성화
                 button.classList.add('active');
                 document.getElementById(tabName).classList.add('active');
-                
-                // 탭별 렌더링 함수 호출
+
+                // 탭 전환 시 서버에서 최신 데이터 로드 후 렌더링
+                await fetchAndUpdateFromServer();
+
                 switch(tabName) {
                     case 'calendar':
+                        renderEventsOnCalendar();
                         renderEvents();
                         break;
                     case 'bulletin':
@@ -1281,9 +1217,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderShopping();
     initWeather();
     setupInfoModal('scheduleDetailModal');
-
-    // 3초마다 서버에서 최신 데이터 동기화
-    setInterval(syncDataFromServer, 3000);
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
 
