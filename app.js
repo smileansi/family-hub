@@ -324,11 +324,13 @@ function initCalendar() {
 function prevMonth() {
     currentDate.setMonth(currentDate.getMonth() - 1);
     updateCalendarView();
+    renderEvents(); // 월 변경 시 일정 리스트도 업데이트
 }
 
 function nextMonth() {
     currentDate.setMonth(currentDate.getMonth() + 1);
     updateCalendarView();
+    renderEvents(); // 월 변경 시 일정 리스트도 업데이트
 }
 
 function updateCalendarView() {
@@ -521,6 +523,15 @@ function renderEvents() {
         `;
         eventsList.appendChild(eventDiv);
     });
+}
+
+function deleteEvent(id) {
+    if (confirm('정말 삭제하시겠습니까?')) {
+        appState.events = appState.events.filter(e => e.id !== id);
+        saveLocalData();
+        renderEvents();
+        renderEventsOnCalendar(); // 캘린더에서도 제거
+    }
 }
 
 function showEventViewModal(year, month, date) {
