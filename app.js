@@ -54,6 +54,7 @@ async function loadLocalData() {
             appState.activeScheduleMember = data.activeScheduleMember || '전체';
             appState.todos = data.todos || [];
             appState.shopping = data.shopping || [];
+            removeLegacyAuthors();
             console.log('시간표 로드됨:', appState.schedules.length, '개');
             await fetchKoreanHolidays(new Date().getFullYear());
             return;
@@ -72,9 +73,17 @@ async function loadLocalData() {
         appState.activeScheduleMember = data.activeScheduleMember || '전체';
         appState.todos = data.todos || [];
         appState.shopping = data.shopping || [];
+        removeLegacyAuthors();
         removeLegacyHolidayEvents();
     }
     await fetchKoreanHolidays(new Date().getFullYear());
+}
+
+function removeLegacyAuthors() {
+    appState.bulletins = appState.bulletins.map(({ createdBy, ...rest }) => rest);
+    appState.schedules = appState.schedules.map(({ createdBy, ...rest }) => rest);
+    appState.todos = appState.todos.map(({ createdBy, ...rest }) => rest);
+    appState.shopping = appState.shopping.map(({ createdBy, ...rest }) => rest);
 }
 
 // LocalStorage에 데이터 저장
@@ -134,6 +143,7 @@ async function syncDataFromServer() {
                 appState.activeScheduleMember = data.activeScheduleMember || '전체';
                 appState.todos = data.todos || [];
                 appState.shopping = data.shopping || [];
+                removeLegacyAuthors();
                 await fetchKoreanHolidays(currentDate.getFullYear());
                 
                 // UI 업데이트
@@ -167,53 +177,8 @@ async function syncDataFromServer() {
 }
 
 // ============================================
-// 인증 (임시: localStorage 기반)
+// 인증 없이 바로 사용합니다.
 // ============================================
-function initAuth() {
-    const savedUser = localStorage.getItem('familyHubUser');
-    if (savedUser) {
-        appState.user = JSON.parse(savedUser);
-        showAuthUI();
-    } else {
-        promptLogin();
-    }
-}
-
-function promptLogin() {
-    const name = prompt('👨‍👩‍👧‍👦 패밀리 허브에 오신 것을 환영합니다!\n\n이름을 입력해주세요:');
-    if (name) {
-        appState.user = {
-            id: Date.now(),
-            name: name,
-            color: getRandomColor()
-        };
-        localStorage.setItem('familyHubUser', JSON.stringify(appState.user));
-        showAuthUI();
-        updateFamilySelects();
-    }
-}
-
-function getRandomColor() {
-    const colors = ['#667eea', '#f093fb', '#4facfe', '#ffa502', '#ff6b6b', '#00d4ff'];
-    return colors[Math.floor(Math.random() * colors.length)];
-}
-
-function showAuthUI() {
-    if (appState.user) {
-        document.getElementById('userName').textContent = `👤 ${appState.user.name}`;
-        document.getElementById('userName').style.display = 'block';
-        document.getElementById('loginBtn').style.display = 'none';
-        document.getElementById('logoutBtn').style.display = 'block';
-    }
-}
-
-function logout() {
-    if (confirm('로그아웃하시겠습니까?')) {
-        appState.user = null;
-        localStorage.removeItem('familyHubUser');
-        location.reload();
-    }
-}
 
 // ============================================
 // 탭 관리
@@ -666,7 +631,6 @@ function handleAddBulletin() {
         id: Date.now(),
         title,
         content,
-        createdBy: appState.user.name,
         createdAt: new Date().toISOString()
     };
 
@@ -723,10 +687,6 @@ function renderBulletins() {
 function editBulletin(id) {
     const bulletin = appState.bulletins.find(b => b.id === id);
     if (!bulletin) return;
-    if (bulletin.createdBy !== appState.user.name) {
-        alert('본인이 작성한 메모만 수정할 수 있습니다.');
-        return;
-    }
     // Open modal and fill values
     const modal = document.getElementById('editBulletinModal');
     const titleInput = document.getElementById('editBulletinTitle');
@@ -759,10 +719,7 @@ function editBulletin(id) {
 
 function deleteBulletin(id) {
     const bulletin = appState.bulletins.find(b => b.id === id);
-    if (bulletin && bulletin.createdBy !== appState.user.name) {
-        alert('본인이 작성한 메모만 삭제할 수 있습니다.');
-        return;
-    }
+    if (!bulletin) return;
 
     if (confirm('정말 삭제하시겠습니까?')) {
         appState.bulletins = appState.bulletins.filter(b => b.id !== id);
@@ -925,7 +882,6 @@ function handleAddSchedule() {
         startTime,
         endTime,
         activity,
-        createdBy: appState.user.name,
         createdAt: new Date().toISOString()
     };
 
@@ -1058,15 +1014,11 @@ function renderSchedules() {
                     card.style.backgroundColor = getScheduleColor(schedule.activity);
                     card.title = `${schedule.startTime} ~ ${schedule.endTime}`;
                     card.innerHTML = `
-                        <button class="schedule-card-close" onclick="deleteSchedule(${schedule.id})">✕</button>
                         <div class="schedule-card-activity">${schedule.activity}</div>
                         <div class="schedule-card-time">${schedule.startTime} ~ ${schedule.endTime}</div>
                     `;
-                    card.addEventListener('click', function(event) {
-                        if (event.target.closest('.schedule-card-close')) return;
-                        if (window.innerWidth <= 768) {
-                            openScheduleModal(schedule);
-                        }
+                    card.addEventListener('click', function() {
+                        openScheduleModal(schedule);
                     });
                     overlay.appendChild(card);
                 });
@@ -1085,12 +1037,23 @@ function openScheduleModal(schedule) {
     const day = document.getElementById('scheduleDetailDay');
     const time = document.getElementById('scheduleDetailTime');
     const activity = document.getElementById('scheduleDetailActivity');
+    const deleteBtn = document.getElementById('scheduleDeleteBtn');
 
     if (!modal) return;
     title.textContent = schedule.activity;
     day.textContent = `${schedule.day}요일`;
     time.textContent = `${schedule.startTime} ~ ${schedule.endTime}`;
     activity.textContent = schedule.activity;
+
+    if (deleteBtn) {
+        deleteBtn.onclick = () => {
+            if (confirm('정말 이 시간표를 삭제하시겠습니까?')) {
+                deleteSchedule(schedule.id);
+                modal.classList.remove('show');
+            }
+        };
+    }
+
     modal.classList.add('show');
 }
 
@@ -1132,11 +1095,10 @@ function handleAddTodo() {
     const todo = {
         id: Date.now(),
         title,
-        assignee: assignee || appState.user.name,
+        assignee: assignee || '미지정',
         dueDate,
         priority,
         completed: false,
-        createdBy: appState.user.name,
         createdAt: new Date().toISOString()
     };
 
@@ -1234,7 +1196,6 @@ function handleAddShopping() {
         qty,
         category,
         purchased: false,
-        createdBy: appState.user.name,
         createdAt: new Date().toISOString()
     };
 
@@ -1310,7 +1271,6 @@ function updateShoppingTotal() {
 document.addEventListener('DOMContentLoaded', async () => {
     // 초기화
     await loadLocalData();
-    initAuth();
     initTabs();
     setupModals();
     initCalendar();
@@ -1326,9 +1286,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setInterval(syncDataFromServer, 3000);
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
-
-    // 로그아웃 버튼
-    document.getElementById('logoutBtn').addEventListener('click', logout);
 
     // 날씨 입력
     const weatherInput = document.getElementById('weatherLocation');
