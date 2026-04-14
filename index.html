@@ -66,6 +66,15 @@
                         <h3 id="currentMonth"></h3>
                         <button id="nextMonth">&gt;</button>
                     </div>
+                    <div class="calendar-weekdays">
+                        <div>일</div>
+                        <div>월</div>
+                        <div>화</div>
+                        <div>수</div>
+                        <div>목</div>
+                        <div>금</div>
+                        <div>토</div>
+                    </div>
                     <div class="calendar-grid" id="calendarGrid"></div>
                 </div>
 
@@ -82,6 +91,38 @@
                     <span class="close">&times;</span>
                     <h2 id="eventViewDate">일정 보기</h2>
                     <div id="eventViewList" class="events-container"></div>
+                </div>
+            </div>
+
+            <!-- 일정 추가 모달 -->
+            <div id="eventModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>일정 추가</h2>
+                    <form id="eventForm">
+                        <input type="text" id="eventTitle" placeholder="일정 제목" required>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <label style="display: flex; align-items: center;">
+                                <input type="checkbox" id="eventAllDay"> 종일
+                            </label>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="date" id="eventStartDate" required>
+                            <span>~</span>
+                            <input type="date" id="eventEndDate">
+                        </div>
+                        <div id="timeInputs" style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="time" id="eventStartTime">
+                            <span>~</span>
+                            <input type="time" id="eventEndTime">
+                        </div>
+                        <textarea id="eventDesc" placeholder="상세 내용" rows="3"></textarea>
+                        <select id="eventFamily">
+                            <option value="">가족 멤버 선택</option>
+                            <option value="전체">전체</option>
+                        </select>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </form>
                 </div>
             </div>
         </section>

@@ -349,17 +349,6 @@ function updateCalendarView() {
     const calendarGrid = document.getElementById('calendarGrid');
     calendarGrid.innerHTML = '';
     
-    // 요일 헤더
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    days.forEach(day => {
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'calendar-day-header';
-        dayHeader.textContent = day;
-        dayHeader.style.fontWeight = 'bold';
-        dayHeader.style.textAlign = 'center';
-        calendarGrid.appendChild(dayHeader);
-    });
-    
     // 이전 달의 일자
     for (let i = prevLastDate - firstDayOfWeek + 1; i <= prevLastDate; i++) {
         const dayDiv = createCalendarDay(i, true, year, month - 1);

@@ -464,17 +464,30 @@ form button[type="submit"] {
     font-size: 1.2rem;
 }
 
-.calendar-grid {
+.calendar-weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
-.calendar-day-header {
+.calendar-weekdays > div {
     padding: 0.5rem;
     font-weight: bold;
     text-align: center;
     color: var(--text-color);
+    background: var(--light-bg);
+    border-radius: 6px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
 }
 
 .calendar-day {
