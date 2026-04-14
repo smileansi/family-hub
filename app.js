@@ -17,6 +17,7 @@ const appState = {
     activeScheduleMember: '전체',
     todos: [],
     shopping: [],
+    holidaysByYear: {},
     currentFilter: 'all'
 };
 
@@ -54,7 +55,7 @@ async function loadLocalData() {
             appState.todos = data.todos || [];
             appState.shopping = data.shopping || [];
             console.log('시간표 로드됨:', appState.schedules.length, '개');
-            addKoreanHolidays(); // 한국 공휴일 추가
+            await fetchKoreanHolidays(new Date().getFullYear());
             return;
         }
     } catch (e) {
@@ -72,7 +73,7 @@ async function loadLocalData() {
         appState.todos = data.todos || [];
         appState.shopping = data.shopping || [];
     }
-    addKoreanHolidays(); // 한국 공휴일 추가
+    await fetchKoreanHolidays(new Date().getFullYear());
 }
 
 // LocalStorage에 데이터 저장
@@ -100,54 +101,7 @@ async function saveLocalData() {
 }
 
 // 한국 공휴일 추가
-function addKoreanHolidays() {
-    const koreanHolidays = [
-        { date: '2026-01-01', title: '신정' },
-        { date: '2026-02-16', title: '설날 (연휴)' },
-        { date: '2026-02-17', title: '설날' },
-        { date: '2026-02-18', title: '설날 (연휴)' },
-        { date: '2026-03-01', title: '삼일절' },
-        { date: '2026-05-05', title: '어린이날' },
-        { date: '2026-05-15', title: '부처님오신날' },
-        { date: '2026-06-06', title: '현충일' },
-        { date: '2026-08-15', title: '광복절' },
-        { date: '2026-09-16', title: '추석 (연휴)' },
-        { date: '2026-09-17', title: '추석' },
-        { date: '2026-09-18', title: '추석 (연휴)' },
-        { date: '2026-10-03', title: '개천절' },
-        { date: '2026-10-09', title: '한글날' },
-        { date: '2026-12-25', title: '크리스마스' }
-    ];
 
-    const holidayKey = (item) => `${item.date}|${item.title}`;
-    const officialHolidaySet = new Set(koreanHolidays.map(holidayKey));
-
-    // 잘못된 과거 공휴일 항목 정리
-    appState.events = appState.events.filter(event => {
-        if (!event.isHoliday) return true;
-        return officialHolidaySet.has(holidayKey({ date: event.startDate, title: event.title }));
-    });
-
-    // 공식 공휴일 추가
-    koreanHolidays.forEach(holiday => {
-        const exists = appState.events.some(e => e.title === holiday.title && e.startDate === holiday.date && e.isHoliday);
-        if (!exists) {
-            appState.events.push({
-                id: Date.now() + Math.random(),
-                title: holiday.title,
-                startDate: holiday.date,
-                endDate: holiday.date,
-                allDay: true,
-                startTime: '',
-                endTime: '',
-                desc: '공휴일',
-                family: '전체',
-                isHoliday: true,
-                createdAt: new Date().toISOString()
-            });
-        }
-    });
-}
 
 // 주기적으로 서버에서 최신 데이터 가져오기 (실시간 동기화)
 async function syncDataFromServer() {
@@ -179,7 +133,7 @@ async function syncDataFromServer() {
                 appState.activeScheduleMember = data.activeScheduleMember || '전체';
                 appState.todos = data.todos || [];
                 appState.shopping = data.shopping || [];
-                addKoreanHolidays(); // 동기화 후에도 공휴일 유지
+                await fetchKoreanHolidays(currentDate.getFullYear());
                 
                 // UI 업데이트
                 const activeTab = document.querySelector('.tab-btn.active');
@@ -424,6 +378,9 @@ function updateCalendarView() {
     
     // 일정 표시 업데이트
     renderEventsOnCalendar();
+    fetchKoreanHolidays(year).then(() => {
+        renderEventsOnCalendar();
+    });
 }
 
 function createCalendarDay(date, isOtherMonth, year, month) {
@@ -473,12 +430,19 @@ function getEventsOnDate(year, month, date) {
     // ISO 형식의 날짜 문자열로 비교 (시간대 문제 회피)
     const pad = (n) => String(n).padStart(2, '0');
     const targetDateStr = `${year}-${pad(month + 1)}-${pad(date)}`;
-    
-    return appState.events.filter(event => {
+    const holidays = appState.holidaysByYear[year] || [];
+
+    const eventMatches = appState.events.filter(event => {
         const startDateStr = (event.startDate || event.date).slice(0, 10);
         const endDateStr = (event.endDate || event.startDate || event.date).slice(0, 10);
         return targetDateStr >= startDateStr && targetDateStr <= endDateStr;
     });
+    const holidayMatches = holidays.filter(event => {
+        const startDateStr = event.startDate.slice(0, 10);
+        const endDateStr = event.endDate.slice(0, 10);
+        return targetDateStr >= startDateStr && targetDateStr <= endDateStr;
+    });
+    return [...eventMatches, ...holidayMatches];
 }
 
 function renderEventsOnCalendar() {
@@ -491,6 +455,7 @@ function renderEventsOnCalendar() {
             existingIndicator.remove();
         }
         day.classList.remove('has-events');
+        day.classList.remove('holiday');
         
         // 날짜 정보 추출
         const dateText = day.textContent.split('\n')[0]; // 이벤트 표시가 있으면 분리
@@ -532,7 +497,7 @@ function handleAddEvent() {
         id: Date.now(),
         title,
         startDate,
-        endDate: endDate || startDate, // 명시적으로 설정
+        endDate: endDate || startDate,
         allDay,
         startTime,
         endTime,
@@ -545,6 +510,40 @@ function handleAddEvent() {
     saveLocalData();
     renderEvents();
     renderEventsOnCalendar(); // 캘린더에도 표시
+}
+
+async function fetchKoreanHolidays(year) {
+    if (appState.holidaysByYear[year]) {
+        return appState.holidaysByYear[year];
+    }
+    try {
+        const response = await fetch(`https://date.nager.at/api/v3/PublicHolidays/${year}/KR`);
+        if (!response.ok) {
+            throw new Error(`Holiday API error ${response.status}`);
+        }
+        const data = await response.json();
+        const holidays = data.map(item => ({
+            id: `holiday-${year}-${item.date}`,
+            title: item.localName || item.name,
+            startDate: item.date,
+            endDate: item.date,
+            allDay: true,
+            startTime: '',
+            endTime: '',
+            desc: item.name || '공휴일',
+            family: '전체',
+            isHoliday: true,
+            createdAt: new Date().toISOString()
+        }));
+        appState.holidaysByYear[year] = holidays;
+        if (currentDate.getFullYear() === year) {
+            renderEventsOnCalendar();
+        }
+        return holidays;
+    } catch (e) {
+        console.error('한국 공휴일 API 로드 실패:', e);
+        return [];
+    }
 }
 
 function renderEvents() {
