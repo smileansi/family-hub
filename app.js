@@ -72,6 +72,7 @@ async function loadLocalData() {
         appState.activeScheduleMember = data.activeScheduleMember || '전체';
         appState.todos = data.todos || [];
         appState.shopping = data.shopping || [];
+        removeLegacyHolidayEvents();
     }
     await fetchKoreanHolidays(new Date().getFullYear());
 }
@@ -432,10 +433,12 @@ function getEventsOnDate(year, month, date) {
     const targetDateStr = `${year}-${pad(month + 1)}-${pad(date)}`;
     const holidays = appState.holidaysByYear[year] || [];
 
-    const eventMatches = appState.events.filter(event => {
-        const startDateStr = (event.startDate || event.date).slice(0, 10);
-        const endDateStr = (event.endDate || event.startDate || event.date).slice(0, 10);
-        return targetDateStr >= startDateStr && targetDateStr <= endDateStr;
+    const eventMatches = appState.events
+        .filter(event => !event.isHoliday)
+        .filter(event => {
+            const startDateStr = (event.startDate || event.date).slice(0, 10);
+            const endDateStr = (event.endDate || event.startDate || event.date).slice(0, 10);
+            return targetDateStr >= startDateStr && targetDateStr <= endDateStr;
     });
     const holidayMatches = holidays.filter(event => {
         const startDateStr = event.startDate.slice(0, 10);
@@ -544,6 +547,10 @@ async function fetchKoreanHolidays(year) {
         console.error('한국 공휴일 API 로드 실패:', e);
         return [];
     }
+}
+
+function removeLegacyHolidayEvents() {
+    appState.events = appState.events.filter(event => !event.isHoliday);
 }
 
 function renderEvents() {
