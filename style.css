@@ -1323,6 +1323,23 @@ form button[type="submit"] {
     color: var(--danger-color);
 }
 
+.weather-location-error {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    color: #555;
+    line-height: 1.7;
+}
+
+.weather-location-error-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.weather-location-error p {
+    font-size: 0.95rem;
+    color: #666;
+}
+
 .weather-main {
     display: grid;
     grid-template-columns: 1fr 1fr;

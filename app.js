@@ -1295,21 +1295,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 날씨 기능
 // ============================================
 function initWeather() {
-    // 현재 위치 기반 날씨 우선 조회 → 실패 시 저장된 위치 또는 기본값 사용
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
-            },
-            () => {
-                // 권한 거부 or 오류 → 폴백
-                fetchWeather(localStorage.getItem('weatherLocation') || '서울');
-            },
-            { timeout: 10000, maximumAge: 300000 }
-        );
-    } else {
-        fetchWeather(localStorage.getItem('weatherLocation') || '서울');
+    const container = document.getElementById('weatherContainer');
+    container.innerHTML = '<div class="weather-loading"><i class="fas fa-location-dot"></i> 현재 위치를 확인하는 중...</div>';
+
+    if (!navigator.geolocation) {
+        showWeatherLocationError('이 브라우저는 위치 서비스를 지원하지 않습니다.');
+        return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
+        },
+        (error) => {
+            switch (error.code) {
+                case error.PERMISSION_DENIED:
+                    showWeatherLocationError(
+                        '위치 권한이 거부되어 있습니다.<br>브라우저 주소창 옆 자물쇠(🔒) 아이콘을 눌러<br>위치 권한을 <b>허용</b>으로 변경해 주세요.'
+                    );
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    showWeatherLocationError('현재 위치를 확인할 수 없습니다.<br>Wi-Fi 또는 모바일 데이터를 확인해 주세요.');
+                    break;
+                case error.TIMEOUT:
+                    showWeatherLocationError('위치 요청 시간이 초과되었습니다.');
+                    break;
+                default:
+                    showWeatherLocationError('위치 정보를 가져올 수 없습니다. (오류 코드: ' + error.code + ')');
+            }
+        },
+        { timeout: 15000, maximumAge: 60000, enableHighAccuracy: false }
+    );
+}
+
+function showWeatherLocationError(message) {
+    const container = document.getElementById('weatherContainer');
+    container.innerHTML = `
+        <div class="weather-location-error">
+            <div class="weather-location-error-icon">📍</div>
+            <p>${message}</p>
+            <button class="btn btn-primary" onclick="initWeather()" style="margin-top:1rem;">
+                <i class="fas fa-rotate-right"></i> 다시 시도
+            </button>
+        </div>
+    `;
 }
 
 async function fetchWeatherByCoords(lat, lon) {
