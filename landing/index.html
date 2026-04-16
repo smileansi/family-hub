@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>smileansi.com</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f8f9fa;
+            color: #212529;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .logo {
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: #1a1a2e;
+            margin-bottom: 0.4rem;
+        }
+
+        .logo span {
+            color: #4f8ef7;
+        }
+
+        .tagline {
+            font-size: 1rem;
+            color: #868e96;
+            margin-bottom: 3rem;
+            letter-spacing: 0.02em;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            min-width: 200px;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+
+        .btn-primary {
+            background: #4f8ef7;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #495057;
+            border: 1.5px solid #dee2e6;
+        }
+
+        .icon {
+            font-size: 1.1rem;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 1.5rem;
+            font-size: 0.8rem;
+            color: #ced4da;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">smile<span>ansi</span></div>
+        <p class="tagline">personal space</p>
+
+        <div class="links">
+            <a href="/family/" class="btn btn-primary">
+                <span class="icon">🏠</span> Family Hub
+            </a>
+        </div>
+    </div>
+
+    <footer>smileansi.com</footer>
+</body>
+</html>
