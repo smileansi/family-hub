@@ -1349,12 +1349,10 @@ async function fetchWeatherByCoords(lat, lon) {
     let placeName = '현재 위치';
     try {
         const geoResp = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ko`,
-            { headers: { 'Accept-Language': 'ko' } }
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ko`
         );
         const geoData = await geoResp.json();
-        const addr = geoData.address || {};
-        placeName = addr.city || addr.town || addr.village || addr.county || '현재 위치';
+        placeName = geoData.city || geoData.locality || geoData.principalSubdivision || '현재 위치';
     } catch (e) {
         console.warn('역지오코딩 실패, 좌표로 날씨만 조회:', e);
     }
