@@ -595,7 +595,7 @@ function showEventViewModal(year, month, date) {
     
     eventsOnDay.forEach(event => {
         const eventDiv = document.createElement('div');
-        eventDiv.className = 'event-item';
+        eventDiv.className = 'event-card';
         const timeDisplay = event.allDay ? '종일' : 
             (event.startTime && event.endTime ? `${event.startTime} ~ ${event.endTime}` : 
              (event.startTime || event.time || '시간 미정'));

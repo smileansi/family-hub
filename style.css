@@ -614,6 +614,19 @@ form button[type="submit"] {
     white-space: nowrap;
 }
 
+/* 캘린더 모달 내 일정 카드 (기존 4열 레이아웃 유지) */
+.event-card {
+    background: var(--light-bg);
+    padding: 1rem;
+    border-left: 4px solid var(--primary-color);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.event-card:hover {
+    box-shadow: var(--shadow);
+}
+
 .event-title {
     font-weight: 600;
     margin-bottom: 0.5rem;
