@@ -154,6 +154,9 @@ function initTabs() {
                     case 'shopping':
                         renderShopping();
                         break;
+                    case 'weather':
+                        initWeather();
+                        break;
                 }
             } catch (error) {
                 console.error('Tab error:', error);
@@ -1281,20 +1284,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
 
-    // 날씨 입력
-    const weatherInput = document.getElementById('weatherLocation');
-    const weatherSearchBtn = document.getElementById('weatherSearchBtn');
-    
-    if (weatherInput && weatherSearchBtn) {
-        weatherInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                fetchWeather(weatherInput.value);
-            }
-        });
-        
-        weatherSearchBtn.addEventListener('click', () => {
-            fetchWeather(weatherInput.value);
-        });
+    // 날씨 현재 위치 새로고침 버튼
+    const weatherRefreshBtn = document.getElementById('weatherRefreshBtn');
+    if (weatherRefreshBtn) {
+        weatherRefreshBtn.addEventListener('click', () => initWeather());
     }
 });
 
