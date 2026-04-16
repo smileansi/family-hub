@@ -41,7 +41,6 @@
         <button class="tab-btn" data-tab="bulletin"><span class="tab-icon"><i class="fas fa-sticky-note"></i></span> 메모</button>
         <button class="tab-btn" data-tab="schedule"><span class="tab-icon"><i class="fas fa-clock"></i></span> 시간표</button>
         <button class="tab-btn" data-tab="todos"><span class="tab-icon"><i class="fas fa-list-check"></i></span> 할일</button>
-        <button class="tab-btn" data-tab="shopping"><span class="tab-icon"><i class="fas fa-shopping-cart"></i></span> 쇼핑</button>
         <button class="tab-btn" data-tab="weather"><span class="tab-icon"><i class="fas fa-cloud-sun"></i></span> 날씨</button>
     </nav>
 
@@ -239,43 +238,7 @@
             </div>
         </section>
 
-        <!-- 5. 쇼핑 리스트 탭 -->
-        <section id="shopping" class="tab-content">
-            <div class="tab-header">
-                <h2><i class="fas fa-shopping-cart"></i> 쇼핑 리스트</h2>
-                <button class="btn btn-primary" id="addShoppingBtn">+ 아이템 추가</button>
-            </div>
-
-            <div class="shopping-container">
-                <div id="shoppingList" class="shopping-list"></div>
-                <div class="shopping-stats">
-                    <p>구매 예상액: <strong id="shoppingTotal">₩0</strong></p>
-                </div>
-            </div>
-
-            <!-- 쇼핑 아이템 추가 모달 -->
-            <div id="shoppingModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>쇼핑 아이템 추가</h2>
-                    <form id="shoppingForm">
-                        <input type="text" id="shoppingItem" placeholder="상품명" required>
-                        <input type="number" id="shoppingPrice" placeholder="가격" min="0">
-                        <input type="number" id="shoppingQty" placeholder="수량" value="1" min="1">
-                        <select id="shoppingCategory">
-                            <option value="식품">식품</option>
-                            <option value="의류">의류</option>
-                            <option value="생활용품">생활용품</option>
-                            <option value="전자제품">전자제품</option>
-                            <option value="기타">기타</option>
-                        </select>
-                        <button type="submit" class="btn btn-primary">저장</button>
-                    </form>
-                </div>
-            </div>
-        </section>
-
-        <!-- 6. 날씨 탭 -->
+        <!-- 5. 날씨 탭 -->
         <section id="weather" class="tab-content">
             <div class="tab-header">
                 <h2><i class="fas fa-cloud-sun"></i> 날씨</h2>

@@ -16,7 +16,6 @@ const appState = {
     scheduleMembers: [],
     activeScheduleMember: '전체',
     todos: [],
-    shopping: [],
     weatherLocation: '',
     holidaysByYear: {},
     currentFilter: 'all'
@@ -42,7 +41,6 @@ async function loadLocalData() {
                 appState.scheduleMembers      = data.scheduleMembers      || [];
                 appState.activeScheduleMember = data.activeScheduleMember || '전체';
                 appState.todos    = data.todos    || [];
-                appState.shopping = data.shopping || [];
                 removeLegacyAuthors();
                 removeLegacyHolidayEvents();
             } catch (e) {
@@ -58,7 +56,6 @@ function removeLegacyAuthors() {
     appState.bulletins = appState.bulletins.map(({ createdBy, ...rest }) => rest);
     appState.schedules = appState.schedules.map(({ createdBy, ...rest }) => rest);
     appState.todos = appState.todos.map(({ createdBy, ...rest }) => rest);
-    appState.shopping = appState.shopping.map(({ createdBy, ...rest }) => rest);
 }
 
 // LocalStorage에 데이터 저장
@@ -70,7 +67,6 @@ async function saveLocalData() {
         scheduleMembers: appState.scheduleMembers,
         activeScheduleMember: appState.activeScheduleMember,
         todos: appState.todos,
-        shopping: appState.shopping,
         weatherLocation: appState.weatherLocation
     };
     
@@ -102,7 +98,6 @@ async function fetchAndUpdateFromServer() {
         appState.scheduleMembers      = data.scheduleMembers      || [];
         appState.activeScheduleMember = data.activeScheduleMember || appState.activeScheduleMember || '전체';
         appState.todos    = data.todos    || [];
-        appState.shopping = data.shopping || [];
         appState.weatherLocation = data.weatherLocation || '';
         removeLegacyAuthors();
         return true;
@@ -154,9 +149,6 @@ function initTabs() {
                     case 'todos':
                         renderTodos();
                         break;
-                    case 'shopping':
-                        renderShopping();
-                        break;
                     case 'weather':
                         initWeather();
                         break;
@@ -172,7 +164,7 @@ function initTabs() {
 // 스와이프 탭 전환 (모바일)
 // ============================================
 function initSwipe() {
-    const tabOrder = ['calendar', 'bulletin', 'schedule', 'todos', 'shopping', 'weather'];
+    const tabOrder = ['calendar', 'bulletin', 'schedule', 'todos', 'weather'];
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
@@ -243,8 +235,6 @@ function setupModals() {
     // 할일 모달
     setupModal('todoModal', 'addTodoBtn', 'todoForm', handleAddTodo);
     
-    // 쇼핑 모달
-    setupModal('shoppingModal', 'addShoppingBtn', 'shoppingForm', handleAddShopping);
 }
 
 function setupModal(modalId, btnId, formId, submitHandler) {
@@ -1182,90 +1172,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ============================================
-// 쇼핑 리스트 기능
-// ============================================
-function handleAddShopping() {
-    const item = document.getElementById('shoppingItem').value;
-    const price = parseFloat(document.getElementById('shoppingPrice').value) || 0;
-    const qty = parseInt(document.getElementById('shoppingQty').value) || 1;
-    const category = document.getElementById('shoppingCategory').value;
-
-    const shopping = {
-        id: Date.now(),
-        item,
-        price,
-        qty,
-        category,
-        purchased: false,
-        createdAt: new Date().toISOString()
-    };
-
-    appState.shopping.push(shopping);
-    saveLocalData();
-    renderShopping();
-}
-
-function renderShopping() {
-    const shoppingList = document.getElementById('shoppingList');
-    shoppingList.innerHTML = '';
-
-    if (appState.shopping.length === 0) {
-        shoppingList.innerHTML = '<div class="empty-state">쇼핑 리스트가 비어있습니다.</div>';
-        updateShoppingTotal();
-        return;
-    }
-
-    appState.shopping.forEach(shop => {
-        const shopDiv = document.createElement('div');
-        shopDiv.className = `shopping-item ${shop.purchased ? 'completed' : ''}`;
-        
-        const totalPrice = shop.price * shop.qty;
-        
-        shopDiv.innerHTML = `
-            <div class="shopping-item-content">
-                <input type="checkbox" class="shopping-checkbox" ${shop.purchased ? 'checked' : ''} 
-                    onchange="toggleShopping(${shop.id})">
-                <div class="shopping-details">
-                    <div class="shopping-item-name">${shop.item}</div>
-                    <div class="shopping-item-category">${shop.category} · 수량: ${shop.qty}</div>
-                </div>
-            </div>
-            <div class="shopping-price">₩${totalPrice.toLocaleString()}</div>
-            <div class="event-actions">
-                <button class="btn btn-small btn-danger" onclick="deleteShopping(${shop.id})">삭제</button>
-            </div>
-        `;
-        
-        shoppingList.appendChild(shopDiv);
-    });
-
-    updateShoppingTotal();
-}
-
-function toggleShopping(id) {
-    const shop = appState.shopping.find(s => s.id === id);
-    if (shop) {
-        shop.purchased = !shop.purchased;
-        saveLocalData();
-        renderShopping();
-    }
-}
-
-function deleteShopping(id) {
-    if (confirm('정말 삭제하시겠습니까?')) {
-        appState.shopping = appState.shopping.filter(s => s.id !== id);
-        saveLocalData();
-        renderShopping();
-    }
-}
-
-function updateShoppingTotal() {
-    const total = appState.shopping
-        .filter(s => !s.purchased)
-        .reduce((sum, s) => sum + (s.price * s.qty), 0);
-    document.getElementById('shoppingTotal').textContent = `₩${total.toLocaleString()}`;
-}
 
 // ============================================
 // 위젯 통합 범사
@@ -1281,7 +1187,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderBulletins();
     renderSchedules();
     renderTodos();
-    renderShopping();
     initWeather();
     setupInfoModal('scheduleDetailModal');
 
