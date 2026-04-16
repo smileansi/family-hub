@@ -1345,23 +1345,29 @@ async function fetchWeatherByCoords(lat, lon) {
     const container = document.getElementById('weatherContainer');
     container.innerHTML = '<div class="weather-loading">현재 위치 날씨를 불러오는 중...</div>';
 
+    // 역지오코딩으로 지역명 조회 (실패해도 좌표로 날씨는 계속 조회)
+    let placeName = '현재 위치';
     try {
-        // 역지오코딩으로 지역명 조회 (Nominatim)
         const geoResp = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ko`,
             { headers: { 'Accept-Language': 'ko' } }
         );
         const geoData = await geoResp.json();
         const addr = geoData.address || {};
-        const placeName = addr.city || addr.town || addr.village || addr.county || '현재 위치';
-        const place = {
-            name:      placeName,
-            admin1:    addr.state || '',
-            country:   addr.country || '',
-            latitude:  lat,
-            longitude: lon,
-        };
+        placeName = addr.city || addr.town || addr.village || addr.county || '현재 위치';
+    } catch (e) {
+        console.warn('역지오코딩 실패, 좌표로 날씨만 조회:', e);
+    }
 
+    const place = {
+        name:      placeName,
+        admin1:    '',
+        country:   '',
+        latitude:  lat,
+        longitude: lon,
+    };
+
+    try {
         // 날씨 데이터 조회
         const weatherResp = await fetch(
             `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
@@ -1373,57 +1379,11 @@ async function fetchWeatherByCoords(lat, lon) {
         if (weatherData.error) throw new Error(weatherData.error);
         renderWeather(weatherData, place);
     } catch (e) {
-        console.error('현재 위치 날씨 조회 실패:', e);
-        fetchWeather(localStorage.getItem('weatherLocation') || '서울');
+        console.error('날씨 API 조회 실패:', e);
+        showWeatherLocationError('날씨 정보를 불러오는데 실패했습니다.<br>네트워크 연결을 확인하고 다시 시도해주세요.');
     }
 }
 
-async function fetchWeather(location) {
-    const container = document.getElementById('weatherContainer');
-    container.innerHTML = '<div class="weather-loading">날씨 정보를 불러오는 중...</div>';
-
-    try {
-        // Open-Meteo API 사용 (무료, API 키 불필요)
-        const geoResponse = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&language=ko`
-        );
-        const geoData = await geoResponse.json();
-        console.log('지오코딩 응답:', geoData);
-
-        if (!geoData.results || geoData.results.length === 0) {
-            container.innerHTML = '<div class="weather-error">도시를 찾을 수 없습니다. 다시 입력해주세요.</div>';
-            return;
-        }
-
-        const place = geoData.results[0];
-        console.log('선택된 위치:', place);
-        
-        // 현재 + 일별 날씨 데이터 요청
-        const weatherResponse = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
-        );
-        const weatherData = await weatherResponse.json();
-        console.log('날씨 API 응답:', weatherData);
-
-        if (weatherData.error) {
-            console.error('API 에러:', weatherData.error);
-            container.innerHTML = '<div class="weather-error">API 요청 실패: ' + weatherData.error + '</div>';
-            return;
-        }
-
-        if (!weatherData.current) {
-            console.error('날씨 데이터 형식 오류:', weatherData);
-            container.innerHTML = '<div class="weather-error">날씨 데이터를 파싱할 수 없습니다.</div>';
-            return;
-        }
-
-        localStorage.setItem('weatherLocation', location);
-        renderWeather(weatherData, place);
-    } catch (error) {
-        container.innerHTML = '<div class="weather-error">날씨 정보를 가져올 수 없습니다.</div>';
-        console.error('날씨 에러:', error);
-    }
-}
 
 function renderWeather(data, place) {
     const container = document.getElementById('weatherContainer');
