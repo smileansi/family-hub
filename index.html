@@ -279,7 +279,10 @@
         <section id="weather" class="tab-content">
             <div class="tab-header">
                 <h2><i class="fas fa-cloud-sun"></i> 날씨</h2>
-                <button id="weatherRefreshBtn" class="btn btn-secondary"><i class="fas fa-location-dot"></i> 현재 위치</button>
+                <div class="weather-search">
+                    <input type="text" id="weatherLocation" placeholder="지역명 입력 (예: 수원)" class="weather-input">
+                    <button id="weatherSearchBtn" class="btn btn-primary">검색</button>
+                </div>
             </div>
 
             <div id="weatherContainer" class="weather-container">
@@ -290,6 +293,6 @@
 
     <!-- Firebase 스크립트 -->
     <script type="module" src="firebase-config.js"></script>
-    <script src="app.js?v=98cff77"></script>
+    <script src="app.js?v=weather-search"></script>
 </body>
 </html>

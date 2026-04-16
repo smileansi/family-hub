@@ -17,6 +17,7 @@ const appState = {
     activeScheduleMember: '전체',
     todos: [],
     shopping: [],
+    weatherLocation: '',
     holidaysByYear: {},
     currentFilter: 'all'
 };
@@ -69,7 +70,8 @@ async function saveLocalData() {
         scheduleMembers: appState.scheduleMembers,
         activeScheduleMember: appState.activeScheduleMember,
         todos: appState.todos,
-        shopping: appState.shopping
+        shopping: appState.shopping,
+        weatherLocation: appState.weatherLocation
     };
     
     try {
@@ -101,6 +103,7 @@ async function fetchAndUpdateFromServer() {
         appState.activeScheduleMember = data.activeScheduleMember || appState.activeScheduleMember || '전체';
         appState.todos    = data.todos    || [];
         appState.shopping = data.shopping || [];
+        appState.weatherLocation = data.weatherLocation || '';
         removeLegacyAuthors();
         return true;
     } catch (e) {
@@ -1284,10 +1287,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
 
-    // 날씨 현재 위치 새로고침 버튼
-    const weatherRefreshBtn = document.getElementById('weatherRefreshBtn');
-    if (weatherRefreshBtn) {
-        weatherRefreshBtn.addEventListener('click', () => initWeather());
+    // 날씨 검색
+    const weatherInput = document.getElementById('weatherLocation');
+    const weatherSearchBtn = document.getElementById('weatherSearchBtn');
+    if (weatherInput && weatherSearchBtn) {
+        weatherSearchBtn.addEventListener('click', () => {
+            const loc = weatherInput.value.trim();
+            if (loc) fetchWeather(loc);
+        });
+        weatherInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const loc = weatherInput.value.trim();
+                if (loc) fetchWeather(loc);
+            }
+        });
     }
 });
 
@@ -1295,90 +1308,58 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 날씨 기능
 // ============================================
 function initWeather() {
-    const container = document.getElementById('weatherContainer');
-    container.innerHTML = '<div class="weather-loading"><i class="fas fa-location-dot"></i> 현재 위치를 확인하는 중...</div>';
-
-    if (!navigator.geolocation) {
-        showWeatherLocationError('이 브라우저는 위치 서비스를 지원하지 않습니다.');
-        return;
+    if (appState.weatherLocation) {
+        fetchWeather(appState.weatherLocation);
+    } else {
+        // 저장된 지역 없으면 검색 안내
+        const container = document.getElementById('weatherContainer');
+        container.innerHTML = `
+            <div class="weather-location-error">
+                <div class="weather-location-error-icon">🌤️</div>
+                <p>지역을 검색해서 날씨를 확인하세요.</p>
+            </div>
+        `;
     }
-
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
-        },
-        (error) => {
-            switch (error.code) {
-                case error.PERMISSION_DENIED:
-                    showWeatherLocationError(
-                        '위치 권한이 거부되어 있습니다.<br>브라우저 주소창 옆 자물쇠(🔒) 아이콘을 눌러<br>위치 권한을 <b>허용</b>으로 변경해 주세요.'
-                    );
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    showWeatherLocationError('현재 위치를 확인할 수 없습니다.<br>Wi-Fi 또는 모바일 데이터를 확인해 주세요.');
-                    break;
-                case error.TIMEOUT:
-                    showWeatherLocationError('위치 요청 시간이 초과되었습니다.');
-                    break;
-                default:
-                    showWeatherLocationError('위치 정보를 가져올 수 없습니다. (오류 코드: ' + error.code + ')');
-            }
-        },
-        { timeout: 15000, maximumAge: 60000, enableHighAccuracy: false }
-    );
 }
 
-function showWeatherLocationError(message) {
+async function fetchWeather(location) {
     const container = document.getElementById('weatherContainer');
-    container.innerHTML = `
-        <div class="weather-location-error">
-            <div class="weather-location-error-icon">📍</div>
-            <p>${message}</p>
-            <button class="btn btn-primary" onclick="initWeather()" style="margin-top:1rem;">
-                <i class="fas fa-rotate-right"></i> 다시 시도
-            </button>
-        </div>
-    `;
-}
+    container.innerHTML = '<div class="weather-loading">날씨 정보를 불러오는 중...</div>';
 
-async function fetchWeatherByCoords(lat, lon) {
-    const container = document.getElementById('weatherContainer');
-    container.innerHTML = '<div class="weather-loading">현재 위치 날씨를 불러오는 중...</div>';
-
-    // 역지오코딩으로 지역명 조회 (실패해도 좌표로 날씨는 계속 조회)
-    let placeName = '현재 위치';
     try {
         const geoResp = await fetch(
-            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ko`
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=ko`
         );
         const geoData = await geoResp.json();
-        placeName = geoData.city || geoData.locality || geoData.principalSubdivision || '현재 위치';
-    } catch (e) {
-        console.warn('역지오코딩 실패, 좌표로 날씨만 조회:', e);
-    }
 
-    const place = {
-        name:      placeName,
-        admin1:    '',
-        country:   '',
-        latitude:  lat,
-        longitude: lon,
-    };
+        if (!geoData.results || geoData.results.length === 0) {
+            container.innerHTML = '<div class="weather-error">지역을 찾을 수 없습니다. 다시 검색해주세요.</div>';
+            return;
+        }
 
-    try {
-        // 날씨 데이터 조회
+        const place = geoData.results[0];
         const weatherResp = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+            `https://api.open-meteo.com/v1/forecast` +
+            `?latitude=${place.latitude}&longitude=${place.longitude}` +
             `&current=temperature_2m,weather_code` +
             `&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
         );
         const weatherData = await weatherResp.json();
 
         if (weatherData.error) throw new Error(weatherData.error);
+
+        // 지역 저장 (서버 JSON에 반영)
+        appState.weatherLocation = location;
+        saveLocalData();
+
+        // input 값도 동기화
+        const input = document.getElementById('weatherLocation');
+        if (input) input.value = location;
+
         renderWeather(weatherData, place);
     } catch (e) {
-        console.error('날씨 API 조회 실패:', e);
-        showWeatherLocationError('날씨 정보를 불러오는데 실패했습니다.<br>네트워크 연결을 확인하고 다시 시도해주세요.');
+        console.error('날씨 조회 실패:', e);
+        container.innerHTML = '<div class="weather-error">날씨 정보를 가져올 수 없습니다. 네트워크를 확인해주세요.</div>';
     }
 }
 
