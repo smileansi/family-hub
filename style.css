@@ -376,6 +376,11 @@ main {
 .modal-content h2 {
     margin-bottom: 1.5rem;
     color: var(--dark-text);
+    padding-right: 2rem;
+}
+
+#eventViewDate {
+    font-size: 1.1rem;
 }
 
 /* ============================================

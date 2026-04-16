@@ -590,7 +590,7 @@ function showEventViewModal(year, month, date) {
     const dateHeader = document.getElementById('eventViewDate');
     const list = document.getElementById('eventViewList');
     
-    dateHeader.textContent = `${year}년 ${month + 1}월 ${date}일 일정`;
+    dateHeader.textContent = `${year}년 ${month + 1}월 ${date}일`;
     list.innerHTML = '';
     
     eventsOnDay.forEach(event => {
