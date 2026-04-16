@@ -175,6 +175,15 @@ function setupModals() {
     allDayCheckbox.addEventListener('change', () => {
         timeInputs.style.display = allDayCheckbox.checked ? 'none' : 'flex';
     });
+
+    // 시작일 입력 시 종료일 자동 동기화
+    const eventStartDate = document.getElementById('eventStartDate');
+    const eventEndDate = document.getElementById('eventEndDate');
+    eventStartDate.addEventListener('change', () => {
+        if (!eventEndDate.value || eventEndDate.value < eventStartDate.value) {
+            eventEndDate.value = eventStartDate.value;
+        }
+    });
     
     // 공지 모달
     setupModal('bulletinModal', 'addBulletinBtn', 'bulletinForm', handleAddBulletin);
@@ -487,21 +496,29 @@ function renderEvents() {
         return;
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     sortedEvents.forEach(event => {
         const eventDiv = document.createElement('div');
-        eventDiv.className = 'event-item';
-        const timeDisplay = event.allDay ? '종일' : 
-            (event.startTime && event.endTime ? `${event.startTime} ~ ${event.endTime}` : 
-             (event.startTime || event.time || '시간 미정'));
-        const dateDisplay = (event.startDate || event.date) === (event.endDate || event.startDate || event.date) ? 
-            (event.startDate || event.date) : `${event.startDate || event.date} ~ ${event.endDate || event.startDate || event.date}`;
+        const endDate = new Date(event.endDate || event.startDate || event.date);
+        endDate.setHours(23, 59, 59, 999);
+        const isPast = endDate < today;
+
+        eventDiv.className = 'event-item' + (isPast ? ' event-past' : '');
+
+        const timeDisplay = event.allDay ? '종일' :
+            (event.startTime && event.endTime ? `${event.startTime}~${event.endTime}` :
+             (event.startTime || event.time || ''));
+        const startDate = event.startDate || event.date;
+        const dateDisplay = startDate === (event.endDate || startDate)
+            ? startDate
+            : `${startDate}~${event.endDate || startDate}`;
+
         eventDiv.innerHTML = `
-            <div class="event-title">${event.title}</div>
-            <div class="event-date">📅 ${dateDisplay} ${timeDisplay}</div>
-            ${event.desc ? `<div class="event-date" style="margin-top: 0.5rem;">${event.desc}</div>` : ''}
-            <div class="event-actions">
-                <button class="btn btn-small btn-danger" onclick="deleteEvent(${event.id})">삭제</button>
-            </div>
+            <span class="event-item-date">${dateDisplay}</span>
+            <span class="event-item-time">${timeDisplay}</span>
+            <span class="event-item-title">${event.title}</span>
         `;
         eventsList.appendChild(eventDiv);
     });
