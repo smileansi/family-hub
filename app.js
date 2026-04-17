@@ -14,6 +14,7 @@ const appState = {
     bulletins: [],
     schedules: [],
     scheduleMembers: [],
+    scheduleMemberInfo: {},
     activeScheduleMember: '전체',
     todos: [],
     weatherLocation: '',
@@ -39,6 +40,7 @@ async function loadLocalData() {
                 appState.bulletins = data.bulletins || [];
                 appState.schedules = data.schedules || [];
                 appState.scheduleMembers      = data.scheduleMembers      || [];
+                appState.scheduleMemberInfo   = data.scheduleMemberInfo   || {};
                 appState.activeScheduleMember = data.activeScheduleMember || '전체';
                 appState.todos    = data.todos    || [];
                 removeLegacyAuthors();
@@ -65,6 +67,7 @@ async function saveLocalData() {
         bulletins: appState.bulletins,
         schedules: appState.schedules,
         scheduleMembers: appState.scheduleMembers,
+        scheduleMemberInfo: appState.scheduleMemberInfo,
         activeScheduleMember: appState.activeScheduleMember,
         todos: appState.todos,
         weatherLocation: appState.weatherLocation
@@ -96,6 +99,7 @@ async function fetchAndUpdateFromServer() {
         appState.bulletins = data.bulletins || [];
         appState.schedules = data.schedules || [];
         appState.scheduleMembers      = data.scheduleMembers      || [];
+        appState.scheduleMemberInfo   = data.scheduleMemberInfo   || {};
         appState.activeScheduleMember = data.activeScheduleMember || appState.activeScheduleMember || '전체';
         appState.todos    = data.todos    || [];
         appState.weatherLocation = data.weatherLocation || '';
@@ -145,6 +149,7 @@ function initTabs() {
                     case 'schedule':
                         renderScheduleMemberTabs();
                         renderSchedules();
+                        renderMemberInfo();
                         break;
                     case 'todos':
                         renderTodos();
@@ -817,6 +822,7 @@ function renderScheduleMemberTabs() {
             saveLocalData();
             renderScheduleMemberTabs();
             renderSchedules();
+            renderMemberInfo();
         });
         tabsContainer.appendChild(tab);
     });
@@ -827,6 +833,60 @@ function renderScheduleMemberTabs() {
         info.textContent = '이름을 먼저 추가해주세요.';
         tabsContainer.appendChild(info);
     }
+}
+
+function renderMemberInfo() {
+    const area = document.getElementById('memberInfoArea');
+    if (!area) return;
+    const member = appState.activeScheduleMember;
+    if (!member || !appState.scheduleMembers.includes(member)) {
+        area.innerHTML = '';
+        return;
+    }
+    const info = appState.scheduleMemberInfo[member] || {};
+
+    area.innerHTML = `
+        <div class="member-info-display" id="memberInfoDisplay">
+            <span class="member-info-text">
+                ${info.grade ? `${info.grade}학년` : '?학년'}
+                ${info.classNum ? `${info.classNum}반` : '?반'}
+                ${info.number ? `${info.number}번` : '?번'}
+                ${info.teacher ? `· 담임 ${info.teacher} 선생님` : ''}
+            </span>
+            <button class="member-info-edit-btn" onclick="showMemberInfoEdit()">수정</button>
+        </div>
+        <div class="member-info-edit" id="memberInfoEdit" style="display:none;">
+            <input type="text" id="infoGrade" placeholder="학년" value="${info.grade || ''}" maxlength="2">
+            <label>학년</label>
+            <input type="text" id="infoClass" placeholder="반" value="${info.classNum || ''}" maxlength="2">
+            <label>반</label>
+            <input type="text" id="infoNumber" placeholder="번호" value="${info.number || ''}" maxlength="3">
+            <label>번</label>
+            <input type="text" id="infoTeacher" placeholder="담임 선생님 이름" value="${info.teacher || ''}">
+            <label>선생님</label>
+            <button class="btn btn-primary btn-small" onclick="saveMemberInfo()">저장</button>
+            <button class="btn btn-secondary btn-small" onclick="renderMemberInfo()">취소</button>
+        </div>
+    `;
+}
+
+function showMemberInfoEdit() {
+    document.getElementById('memberInfoDisplay').style.display = 'none';
+    document.getElementById('memberInfoEdit').style.display = 'flex';
+    document.getElementById('infoGrade').focus();
+}
+
+function saveMemberInfo() {
+    const member = appState.activeScheduleMember;
+    if (!member) return;
+    appState.scheduleMemberInfo[member] = {
+        grade:    document.getElementById('infoGrade').value.trim(),
+        classNum: document.getElementById('infoClass').value.trim(),
+        number:   document.getElementById('infoNumber').value.trim(),
+        teacher:  document.getElementById('infoTeacher').value.trim(),
+    };
+    saveLocalData();
+    renderMemberInfo();
 }
 
 function addScheduleMember() {
@@ -1186,6 +1246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initScheduleMembers();
     renderBulletins();
     renderSchedules();
+    renderMemberInfo();
     renderTodos();
     initWeather();
     setupInfoModal('scheduleDetailModal');
