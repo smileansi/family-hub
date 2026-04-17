@@ -9,6 +9,15 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
+    <!-- 메모 전체보기 모달 -->
+    <div id="bulletinViewModal" class="modal">
+        <div class="modal-content bulletin-view-modal-content">
+            <span class="close" id="bulletinViewClose">&times;</span>
+            <h2 id="bulletinViewTitle"></h2>
+            <div id="bulletinViewBody" class="bulletin-view-body"></div>
+        </div>
+    </div>
+
     <!-- 메모/공지 수정 모달 -->
     <div id="editBulletinModal" class="modal">
         <div class="modal-content">

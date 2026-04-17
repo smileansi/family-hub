@@ -660,25 +660,45 @@ function renderBulletins() {
         const bulletinDiv = document.createElement('div');
         bulletinDiv.className = 'bulletin-item';
         bulletinDiv.innerHTML = `
-            <div class="bulletin-header" onclick="toggleBulletin(${bulletin.id})">
+            <div class="bulletin-header">
                 <h3 class="bulletin-title">${bulletin.title}</h3>
-                <span class="bulletin-toggle">▼</span>
             </div>
-            <div class="bulletin-content collapsed"></div>
-            <div class="bulletin-actions collapsed">
-                <button class="btn btn-small" onclick="editBulletin(${bulletin.id})" style="background: rgba(255,255,255,0.3); color: white;">수정</button>
-                <button class="btn btn-small" onclick="deleteBulletin(${bulletin.id})" style="background: rgba(255,255,255,0.3); color: white;">삭제</button>
+            <div class="bulletin-content bulletin-preview"></div>
+            <div class="bulletin-footer">
+                <span class="bulletin-more-hint">눌러서 전체 보기</span>
+                <div class="bulletin-actions">
+                    <button class="btn btn-small" onclick="event.stopPropagation(); editBulletin(${bulletin.id})" style="background: rgba(255,255,255,0.3); color: inherit;">수정</button>
+                    <button class="btn btn-small" onclick="event.stopPropagation(); deleteBulletin(${bulletin.id})" style="background: rgba(255,255,255,0.3); color: inherit;">삭제</button>
+                </div>
             </div>
         `;
-        // Render markdown in bulletin-content
         const contentDiv = bulletinDiv.querySelector('.bulletin-content');
         if (window.marked) {
             contentDiv.innerHTML = marked.parse(bulletin.content || '');
         } else {
             contentDiv.textContent = bulletin.content;
         }
+        bulletinDiv.addEventListener('click', () => showBulletinViewModal(bulletin.id));
         bulletinList.appendChild(bulletinDiv);
     });
+}
+
+function showBulletinViewModal(id) {
+    const bulletin = appState.bulletins.find(b => b.id === id);
+    if (!bulletin) return;
+
+    const modal = document.getElementById('bulletinViewModal');
+    document.getElementById('bulletinViewTitle').textContent = bulletin.title;
+    const body = document.getElementById('bulletinViewBody');
+    if (window.marked) {
+        body.innerHTML = marked.parse(bulletin.content || '');
+    } else {
+        body.textContent = bulletin.content;
+    }
+
+    modal.classList.add('show');
+    document.getElementById('bulletinViewClose').onclick = () => modal.classList.remove('show');
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.remove('show'); };
 }
 
 function editBulletin(id) {

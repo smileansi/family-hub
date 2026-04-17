@@ -723,24 +723,38 @@ form button[type="submit"] {
 }
 
 .bulletin-content {
-    font-size: 0.95rem;
-    line-height: 1.7;
-    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.6;
     word-break: break-word;
-    white-space: pre-line;
     overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
-.bulletin-content.collapsed {
-    max-height: 0;
-    opacity: 0;
-    margin-bottom: 0;
+.bulletin-preview {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-height: 4.8em;
+    opacity: 0.85;
+    margin-bottom: 0.5rem;
 }
 
-.bulletin-content:not(.collapsed) {
-    max-height: 1000px; /* 충분히 큰 값 */
-    opacity: 1;
+.bulletin-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.bulletin-more-hint {
+    font-size: 0.75rem;
+    color: rgba(0,0,0,0.35);
+}
+
+.bulletin-actions {
+    display: flex;
+    gap: 0.4rem;
 }
 
 /* 마크다운 스타일 개선 */
@@ -762,23 +776,33 @@ form button[type="submit"] {
     word-break: break-all;
 }
 
-.bulletin-actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+/* 뷰어 모달 */
+.bulletin-view-modal-content {
+    max-width: 640px;
+    width: 92vw;
 }
 
-.bulletin-actions.collapsed {
-    max-height: 0;
-    opacity: 0;
-    margin-top: 0;
+.bulletin-view-body {
+    font-size: 0.95rem;
+    line-height: 1.8;
+    word-break: break-word;
+    white-space: pre-line;
+    color: #333;
 }
 
-.bulletin-actions:not(.collapsed) {
-    max-height: 100px;
-    opacity: 1;
+.bulletin-view-body p { margin: 0.6em 0; }
+.bulletin-view-body ul, .bulletin-view-body ol { margin: 0.5em 0 0.5em 1.4em; }
+.bulletin-view-body code { background: #f3f3f3; border-radius: 4px; padding: 2px 5px; font-size: 0.92em; }
+.bulletin-view-body pre { background: #f3f3f3; border-radius: 6px; padding: 0.8rem; overflow-x: auto; }
+.bulletin-view-body a { color: #0077cc; text-decoration: underline; word-break: break-all; }
+.bulletin-view-body strong { font-weight: 700; }
+.bulletin-view-body h1, .bulletin-view-body h2, .bulletin-view-body h3 {
+    margin: 1rem 0 0.4rem;
+    font-weight: 700;
+}
+
+.bulletin-item {
+    cursor: pointer;
 }
 
 .bulletin-actions .btn-small {
