@@ -668,16 +668,17 @@ form button[type="submit"] {
 .bulletin-item {
     background: #f6f7d7;
     color: #2c3e50;
-    padding: 1.5rem;
-    border-radius: 12px;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
     box-shadow: var(--shadow);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     position: relative;
+    cursor: pointer;
 }
 
 .bulletin-item:hover {
-    transform: translateY(-5px);
     box-shadow: var(--shadow-lg);
+    transform: translateX(3px);
 }
 
 .bulletin-item:nth-child(3n + 1) {
@@ -690,30 +691,21 @@ form button[type="submit"] {
     background: #f7d7e6; /* 연핑크 */
 }
 
-.bulletin-header {
-    cursor: pointer;
+.bulletin-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0;
-    margin-bottom: 0.5rem;
-}
-
-.bulletin-header:hover .bulletin-title {
-    color: var(--primary-color);
-}
-
-.bulletin-toggle {
-    font-size: 0.8rem;
-    color: #666;
-    transition: transform 0.3s ease;
+    justify-content: space-between;
+    gap: 0.8rem;
 }
 
 .bulletin-title {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+    font-weight: 600;
     margin: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .bulletin-date {
@@ -722,39 +714,10 @@ form button[type="submit"] {
     margin-bottom: 1rem;
 }
 
-.bulletin-content {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    word-break: break-word;
-    overflow: hidden;
-}
-
-.bulletin-preview {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-height: 4.8em;
-    opacity: 0.85;
-    margin-bottom: 0.5rem;
-}
-
-.bulletin-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.5rem;
-}
-
-.bulletin-more-hint {
-    font-size: 0.75rem;
-    color: rgba(0,0,0,0.35);
-}
-
 .bulletin-actions {
     display: flex;
     gap: 0.4rem;
+    flex-shrink: 0;
 }
 
 /* 마크다운 스타일 개선 */

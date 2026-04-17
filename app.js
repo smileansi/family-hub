@@ -660,24 +660,14 @@ function renderBulletins() {
         const bulletinDiv = document.createElement('div');
         bulletinDiv.className = 'bulletin-item';
         bulletinDiv.innerHTML = `
-            <div class="bulletin-header">
+            <div class="bulletin-row">
                 <h3 class="bulletin-title">${bulletin.title}</h3>
-            </div>
-            <div class="bulletin-content bulletin-preview"></div>
-            <div class="bulletin-footer">
-                <span class="bulletin-more-hint">눌러서 전체 보기</span>
                 <div class="bulletin-actions">
-                    <button class="btn btn-small" onclick="event.stopPropagation(); editBulletin(${bulletin.id})" style="background: rgba(255,255,255,0.3); color: inherit;">수정</button>
-                    <button class="btn btn-small" onclick="event.stopPropagation(); deleteBulletin(${bulletin.id})" style="background: rgba(255,255,255,0.3); color: inherit;">삭제</button>
+                    <button class="btn btn-small" onclick="event.stopPropagation(); editBulletin(${bulletin.id})">수정</button>
+                    <button class="btn btn-small" onclick="event.stopPropagation(); deleteBulletin(${bulletin.id})">삭제</button>
                 </div>
             </div>
         `;
-        const contentDiv = bulletinDiv.querySelector('.bulletin-content');
-        if (window.marked) {
-            contentDiv.innerHTML = marked.parse(bulletin.content || '');
-        } else {
-            contentDiv.textContent = bulletin.content;
-        }
         bulletinDiv.addEventListener('click', () => showBulletinViewModal(bulletin.id));
         bulletinList.appendChild(bulletinDiv);
     });
