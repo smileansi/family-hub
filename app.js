@@ -568,12 +568,23 @@ function renderEvents() {
     });
 }
 
-function deleteEvent(id) {
-    if (confirm('정말 삭제하시겠습니까?')) {
-        appState.events = appState.events.filter(e => e.id !== id);
-        saveLocalData();
-        renderEvents();
-        renderEventsOnCalendar(); // 캘린더에서도 제거
+function deleteEvent(id, viewContext) {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+    const before = appState.events.length;
+    // 숫자/문자열 ID 혼용(JSON·서버)에 맞춤
+    appState.events = appState.events.filter(e => e.id != id);
+    if (appState.events.length === before) return;
+    saveLocalData();
+    renderEvents();
+    renderEventsOnCalendar();
+    if (!viewContext) return;
+    const { year, month, date } = viewContext;
+    const modal = document.getElementById('eventViewModal');
+    const remaining = getEventsOnDate(year, month, date);
+    if (remaining.length === 0) {
+        modal.classList.remove('show');
+    } else {
+        showEventViewModal(year, month, date);
     }
 }
 
@@ -596,14 +607,42 @@ function showEventViewModal(year, month, date) {
              (event.startTime || event.time || '시간 미정'));
         const dateDisplay = (event.startDate || event.date) === (event.endDate || event.startDate || event.date) ? 
             (event.startDate || event.date) : `${event.startDate || event.date} ~ ${event.endDate || event.startDate || event.date}`;
-        eventDiv.innerHTML = `
-            <div class="event-title">${event.title}</div>
-            <div class="event-date">📅 ${dateDisplay} ${timeDisplay}</div>
-            ${event.desc ? `<div class="event-date" style="margin-top: 0.5rem;">${event.desc}</div>` : ''}
-            <div class="event-actions">
-                <button class="btn btn-small btn-danger" onclick="deleteEvent(${event.id})">삭제</button>
-            </div>
-        `;
+
+        const titleEl = document.createElement('div');
+        titleEl.className = 'event-title';
+        titleEl.textContent = event.title;
+
+        const metaEl = document.createElement('div');
+        metaEl.className = 'event-date';
+        metaEl.textContent = `📅 ${dateDisplay} ${timeDisplay}`;
+
+        eventDiv.appendChild(titleEl);
+        eventDiv.appendChild(metaEl);
+
+        if (event.desc) {
+            const descEl = document.createElement('div');
+            descEl.className = 'event-date';
+            descEl.style.marginTop = '0.5rem';
+            descEl.textContent = event.desc;
+            eventDiv.appendChild(descEl);
+        }
+
+        // 공휴일은 API 캐시이므로 삭제 버튼 없음(인라인 onclick은 문자열 id에서 문법 오류가 남)
+        if (!event.isHoliday) {
+            const actions = document.createElement('div');
+            actions.className = 'event-actions';
+            const delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-small btn-danger';
+            delBtn.type = 'button';
+            delBtn.textContent = '삭제';
+            delBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteEvent(event.id, { year, month, date });
+            });
+            actions.appendChild(delBtn);
+            eventDiv.appendChild(actions);
+        }
+
         list.appendChild(eventDiv);
     });
     
