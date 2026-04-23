@@ -448,7 +448,7 @@ function handleAddEvent() {
     const startTime = allDay ? '' : document.getElementById('eventStartTime').value;
     const endTime = allDay ? '' : document.getElementById('eventEndTime').value;
     const desc = document.getElementById('eventDesc').value;
-    const family = document.getElementById('eventFamily').value;
+    const family = document.getElementById('eventFamily')?.value;
 
     const event = {
         id: Date.now(),
