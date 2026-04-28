@@ -1294,6 +1294,79 @@ form button[type="submit"] {
 }
 
 /* ============================================
+   쇼핑 리스트
+   ============================================ */
+.shopping-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+}
+
+.shopping-list {
+    margin-bottom: 1.5rem;
+}
+
+.shopping-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+
+.shopping-item:hover {
+    background: var(--light-bg);
+}
+
+.shopping-item.completed .shopping-item-name {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.shopping-item-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.shopping-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.shopping-details {
+    flex: 1;
+}
+
+.shopping-item-name {
+    font-weight: 500;
+}
+
+.shopping-item-category {
+    font-size: 0.8rem;
+    color: #999;
+    margin-top: 0.3rem;
+}
+
+.shopping-price {
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 0 1rem;
+}
+
+.shopping-stats {
+    border-top: 2px solid var(--border-color);
+    padding-top: 1rem;
+    text-align: right;
+    font-size: 1.1rem;
+}
+
+/* ============================================
    날씨
    ============================================ */
 .weather-search {
