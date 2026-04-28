@@ -255,7 +255,12 @@ function setupModal(modalId, btnId, formId, submitHandler) {
     const modal = document.getElementById(modalId);
     const btn = document.getElementById(btnId);
     const form = document.getElementById(formId);
-    const closeBtn = modal.querySelector('.close');
+    const closeBtn = modal?.querySelector('.close');
+
+    if (!modal || !btn || !form || !closeBtn) {
+        console.warn('setupModal 요소 없음:', { modalId, btnId, formId, modal: !!modal, btn: !!btn, form: !!form, closeBtn: !!closeBtn });
+        return;
+    }
 
     btn.addEventListener('click', () => {
         modal.classList.add('show');
