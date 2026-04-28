@@ -8,16 +8,23 @@
 }
 
 :root {
-    --primary-color: #5468ff;
-    --secondary-color: #f093fb;
-    --success-color: #00d4ff;
-    --warning-color: #ffa502;
-    --danger-color: #ff6b6b;
-    --light-bg: #f8f9fa;
-    --dark-text: #2c3e50;
-    --border-color: #e1e8ed;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+    --primary-color: #334155;
+    --primary-hover: #1e293b;
+    --primary-soft: rgba(51, 65, 85, 0.06);
+    --focus-ring: rgba(51, 65, 85, 0.14);
+    --secondary-color: #64748b;
+    --secondary-muted-bg: #f1f5f9;
+    --secondary-muted-hover: #e2e8f0;
+    --success-color: #15803d;
+    --warning-color: #b45309;
+    --danger-color: #be123c;
+    --danger-hover: #9f1239;
+    --light-bg: #f8fafc;
+    --dark-text: #0f172a;
+    --border-color: #e2e8f0;
+    --text-color: #475569;
+    --shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 4px 24px rgba(15, 23, 42, 0.08);
 }
 
 html, body {
@@ -54,10 +61,11 @@ body {
    ============================================ */
 .header {
     grid-area: header;
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
+    background: #ffffff;
+    color: var(--dark-text);
+    border-bottom: 1px solid var(--border-color);
     padding: 1rem 2rem;
-    box-shadow: var(--shadow);
+    box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -96,6 +104,7 @@ body {
 
 .logo i {
     font-size: 2rem;
+    color: var(--primary-color);
 }
 
 .header-right {
@@ -144,28 +153,29 @@ main {
 }
 
 .btn-primary:hover {
-    background: #4557f0;
-    transform: translateY(-2px);
+    background: var(--primary-hover);
+    transform: translateY(-1px);
     box-shadow: var(--shadow);
 }
 
 .btn-logout {
     background: transparent;
-    color: white;
-    border: 1px solid white;
+    color: var(--dark-text);
+    border: 1px solid var(--border-color);
 }
 
 .btn-logout:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--light-bg);
 }
 
 .btn-secondary {
-    background: var(--secondary-color);
-    color: white;
+    background: var(--secondary-muted-bg);
+    color: var(--dark-text);
+    border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-    background: #f073eb;
+    background: var(--secondary-muted-hover);
 }
 
 .btn-danger {
@@ -174,7 +184,7 @@ main {
 }
 
 .btn-danger:hover {
-    background: #ff5252;
+    background: var(--danger-hover);
 }
 
 .btn-small {
@@ -190,8 +200,8 @@ main {
     display: flex;
     flex-direction: column;
     gap: 0;
-    background: white;
-    border-right: 2px solid var(--border-color);
+    background: #fafafa;
+    border-right: 1px solid var(--border-color);
     border-bottom: none;
     overflow-x: hidden;
     overflow-y: auto;
@@ -208,7 +218,7 @@ main {
         grid-area: nav;
         flex-direction: row;
         border-right: none;
-        border-bottom: 2px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
         overflow-x: auto;
         overflow-y: hidden;
         padding: 0.5rem;
@@ -239,7 +249,7 @@ main {
     padding: 1rem 1.5rem;
     cursor: pointer;
     font-size: 0.95rem;
-    color: #666;
+    color: var(--text-color);
     border-bottom: none;
     border-left: 3px solid transparent;
     transition: all 0.3s ease;
@@ -267,7 +277,7 @@ main {
 .tab-btn.active {
     color: var(--primary-color);
     border-left-color: var(--primary-color);
-    background: rgba(84, 104, 255, 0.08);
+    background: var(--primary-soft);
     border-bottom-color: transparent;
 }
 
@@ -420,7 +430,7 @@ textarea:focus,
 select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(84, 104, 255, 0.1);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 textarea {
@@ -523,18 +533,18 @@ form button[type="submit"] {
 }
 
 .calendar-day.has-events {
-    background: #e6f3ff;
-    color: #333;
+    background: #f1f5f9;
+    color: var(--dark-text);
 }
 
 .calendar-day.holiday {
-    background: #fff0f0;
-    color: #c0392b;
-    border-color: #f5c6cb;
+    background: #faf5f5;
+    color: #991b1b;
+    border-color: #fecaca;
 }
 
 .calendar-day.holiday:hover {
-    background: #ffe7e7;
+    background: #fef2f2;
 }
 
 .calendar-day.holiday .event-indicator {
@@ -666,8 +676,8 @@ form button[type="submit"] {
 }
 
 .bulletin-item {
-    background: #f6f7d7;
-    color: #2c3e50;
+    background: #f8fafc;
+    color: var(--dark-text);
     padding: 0.7rem 1rem;
     border-radius: 10px;
     box-shadow: var(--shadow);
@@ -682,13 +692,13 @@ form button[type="submit"] {
 }
 
 .bulletin-item:nth-child(3n + 1) {
-    background: #f6f7d7; /* 연노랑 */
+    background: #f1f5f9;
 }
 .bulletin-item:nth-child(3n + 2) {
-    background: #d7f7f6; /* 연민트 */
+    background: #f8fafc;
 }
 .bulletin-item:nth-child(3n) {
-    background: #f7d7e6; /* 연핑크 */
+    background: #eef2f6;
 }
 
 .bulletin-row {
@@ -757,7 +767,7 @@ form button[type="submit"] {
 .bulletin-view-body ul, .bulletin-view-body ol { margin: 0.5em 0 0.5em 1.4em; }
 .bulletin-view-body code { background: #f3f3f3; border-radius: 4px; padding: 2px 5px; font-size: 0.92em; }
 .bulletin-view-body pre { background: #f3f3f3; border-radius: 6px; padding: 0.8rem; overflow-x: auto; }
-.bulletin-view-body a { color: #0077cc; text-decoration: underline; word-break: break-all; }
+.bulletin-view-body a { color: var(--primary-color); text-decoration: underline; word-break: break-all; }
 .bulletin-view-body strong { font-weight: 700; }
 .bulletin-view-body h1, .bulletin-view-body h2, .bulletin-view-body h3 {
     margin: 1rem 0 0.4rem;
@@ -776,9 +786,9 @@ form button[type="submit"] {
     transition: background 0.2s;
 }
 .bulletin-actions .btn-small:hover {
-    background: #f3f3f3 !important;
-    color: #5468ff !important;
-    border-color: #5468ff;
+    background: var(--secondary-muted-bg) !important;
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color);
 }
 
 /* ============================================

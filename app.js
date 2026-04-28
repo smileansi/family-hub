@@ -804,26 +804,26 @@ function updateFamilySelects() {
 const scheduleColorMap = {};
 
 const colorPalette = [
-    'hsl(6, 56%, 86%)',    // coral
-    'hsl(24, 58%, 86%)',   // apricot
-    'hsl(44, 55%, 88%)',   // mellow yellow
-    'hsl(72, 52%, 88%)',   // soft lime
-    'hsl(110, 45%, 86%)',  // mint
-    'hsl(165, 50%, 86%)',  // seafoam
-    'hsl(190, 55%, 86%)',  // sky
-    'hsl(215, 55%, 86%)',  // baby blue
-    'hsl(240, 55%, 86%)',  // periwinkle
-    'hsl(265, 55%, 85%)',  // lavender
-    'hsl(295, 55%, 85%)',  // orchid
-    'hsl(325, 55%, 85%)',  // rose
-    'hsl(0, 55%, 85%)',    // soft red
-    'hsl(28, 52%, 84%)',   // peach
-    'hsl(55, 52%, 86%)',   // wheat
-    'hsl(160, 45%, 86%)',  // aqua
-    'hsl(205, 48%, 86%)',  // powder blue
-    'hsl(250, 48%, 86%)',  // bluebell
-    'hsl(290, 48%, 86%)',  // violet
-    'hsl(330, 48%, 86%)'   // blush
+    'hsl(215, 28%, 92%)',
+    'hsl(200, 26%, 92%)',
+    'hsl(185, 24%, 92%)',
+    'hsl(160, 22%, 92%)',
+    'hsl(145, 22%, 92%)',
+    'hsl(82, 22%, 92%)',
+    'hsl(48, 26%, 92%)',
+    'hsl(24, 26%, 92%)',
+    'hsl(350, 22%, 92%)',
+    'hsl(320, 22%, 92%)',
+    'hsl(280, 22%, 92%)',
+    'hsl(260, 26%, 92%)',
+    'hsl(235, 28%, 92%)',
+    'hsl(225, 26%, 91%)',
+    'hsl(210, 24%, 91%)',
+    'hsl(175, 22%, 92%)',
+    'hsl(130, 22%, 92%)',
+    'hsl(95, 22%, 92%)',
+    'hsl(60, 24%, 92%)',
+    'hsl(30, 26%, 92%)'
 ];
 
 function assignScheduleColors() {
@@ -845,10 +845,10 @@ function assignScheduleColors() {
             color = unusedColor;
         } else {
             let hue = (usedColors.size * 40) % 360;
-            color = `hsl(${hue}, 52%, 86%)`;
+            color = `hsl(${hue}, 26%, 92%)`;
             while (usedColors.has(color)) {
                 hue = (hue + 35) % 360;
-                color = `hsl(${hue}, 52%, 86%)`;
+                color = `hsl(${hue}, 26%, 92%)`;
             }
         }
 
@@ -858,9 +858,9 @@ function assignScheduleColors() {
 }
 
 function getScheduleColor(name) {
-    if (!name) return '#e8f5e8';
+    if (!name) return '#f1f5f9';
     const key = name.toString().trim().toLowerCase();
-    return scheduleColorMap[key] || '#e8f5e8';
+    return scheduleColorMap[key] || '#f1f5f9';
 }
 
 function parseTime(time) {
