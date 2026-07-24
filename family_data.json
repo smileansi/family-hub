@@ -358,6 +358,14 @@
     "안도경",
     "안수빈"
   ],
+  "scheduleMemberInfo": {
+    "안수빈": {
+      "grade": "4",
+      "classNum": "",
+      "number": "",
+      "teacher": "오승수"
+    }
+  },
   "activeScheduleMember": "안수빈",
   "todos": [
     {
@@ -389,5 +397,6 @@
       "purchased": false,
       "qty": 1
     }
-  ]
+  ],
+  "weatherLocation": ""
 }

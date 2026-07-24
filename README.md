@@ -61,8 +61,20 @@
 ## 💾 데이터 저장
 
 ### 현재 상태 (로컬)
-- 브라우저의 `LocalStorage`에 데이터 저장
-- 같은 기기, 같은 브라우저에서만 데이터 유지
+- SQLite 데이터베이스(`family_hub.db`)에 저장
+- 첫 실행 시 기존 `family_data.json` 데이터를 자동 마이그레이션
+- JSON 원본은 삭제하지 않고 초기 마이그레이션용으로 유지
+- 서버 접속이 불가능할 때만 브라우저 LocalStorage를 임시 저장소로 사용
+
+### 실행
+
+```bash
+python -m pip install -r requirements.txt
+python server.py
+```
+
+브라우저에서 `http://localhost:5000`으로 접속합니다. `index.html`을
+직접 열거나 단순 정적 서버로 실행하면 SQLite API에 연결되지 않습니다.
 
 ### Firebase로 업그레이드 (실시간 동기화)
 
@@ -150,6 +162,7 @@ Firebase 버전:
 - **프론트엔드**: HTML5, CSS3, Vanilla JavaScript
 - **아이콘**: Emoji
 - **API**: Open-Meteo (날씨)
+- **데이터베이스**: SQLite
 - **선택사항**: Firebase (실시간 데이터베이스)
 - **배포**: Vercel, Netlify
 
@@ -160,6 +173,9 @@ family-hub/
 ├── index.html          # 메인 페이지
 ├── style.css           # 스타일시트 (반응형)
 ├── app.js              # 자바스크립트 로직
+├── database.py         # SQLite 스키마 및 데이터 접근
+├── server.py           # Flask API 및 정적 파일 서버
+├── family_hub.db       # 실행 시 생성되는 SQLite DB
 ├── firebase-config.js  # Firebase 설정 (선택)
 ├── README.md           # 이 파일
 └── assets/             # 향후 이미지 저장 폴더

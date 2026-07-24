@@ -4,7 +4,9 @@
 
 // API 엔드포인트 자동 설정
 // 로컬: http://127.0.0.1:5000, 원격: 현재 접속 프로토콜 그대로 사용 (http/https 자동 일치)
-const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+const API_BASE_URL = window.location.protocol === 'file:'
+    ? 'http://127.0.0.1:5000'
+    : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? `http://${window.location.hostname}:5000`
     : `${window.location.protocol}//${window.location.hostname}`;
 
@@ -126,6 +128,7 @@ async function fetchAndUpdateFromServer() {
 function initTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+    const pageIntro = document.querySelector('.page-intro');
 
     tabButtons.forEach(button => {
         button.addEventListener('click', async () => {
@@ -139,6 +142,7 @@ function initTabs() {
                 // 선택된 탭 활성화
                 button.classList.add('active');
                 document.getElementById(tabName).classList.add('active');
+                pageIntro?.classList.toggle('is-hidden', tabName !== 'calendar');
 
                 // 탭 전환 시 서버에서 최신 데이터 로드 후 렌더링
                 await fetchAndUpdateFromServer();

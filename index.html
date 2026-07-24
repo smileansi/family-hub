@@ -38,28 +38,62 @@
     <header class="header">
         <div class="container">
             <div class="header-content">
-                <h1 class="logo"><i class="fas fa-home"></i> 패밀리 허브</h1>
-                <div class="header-right"></div>
+                <div class="brand-lockup">
+                    <span class="brand-symbol"><i class="fas fa-house"></i></span>
+                    <div>
+                        <span class="brand-label">OUR FAMILY SPACE</span>
+                        <h1 class="logo">Family Hub</h1>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="today-summary">
+                        <span class="today-dot"></span>
+                        <div>
+                            <strong id="headerDate">오늘</strong>
+                            <span id="headerWeekday"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
 
     <!-- 탭 네비게이션 -->
     <nav class="tab-nav">
-        <button class="tab-btn active" data-tab="calendar"><span class="tab-icon"><i class="fas fa-calendar"></i></span> 일정</button>
-        <button class="tab-btn" data-tab="bulletin"><span class="tab-icon"><i class="fas fa-sticky-note"></i></span> 메모</button>
-        <button class="tab-btn" data-tab="schedule"><span class="tab-icon"><i class="fas fa-clock"></i></span> 시간표</button>
-        <button class="tab-btn" data-tab="todos"><span class="tab-icon"><i class="fas fa-list-check"></i></span> 할일</button>
-        <button class="tab-btn" data-tab="shopping"><span class="tab-icon"><i class="fas fa-shopping-cart"></i></span> 쇼핑</button>
-        <button class="tab-btn" data-tab="weather"><span class="tab-icon"><i class="fas fa-cloud-sun"></i></span> 날씨</button>
+        <div class="nav-section-label">가족 생활</div>
+        <button class="tab-btn active" data-tab="calendar"><span class="tab-icon"><i class="fa-regular fa-calendar"></i></span><span>일정</span></button>
+        <button class="tab-btn" data-tab="bulletin"><span class="tab-icon"><i class="fa-regular fa-note-sticky"></i></span><span>메모</span></button>
+        <button class="tab-btn" data-tab="schedule"><span class="tab-icon"><i class="fas fa-table-cells-large"></i></span><span>시간표</span></button>
+        <button class="tab-btn" data-tab="todos"><span class="tab-icon"><i class="fas fa-circle-check"></i></span><span>할 일</span></button>
+        <button class="tab-btn" data-tab="shopping"><span class="tab-icon"><i class="fas fa-basket-shopping"></i></span><span>쇼핑</span></button>
+        <button class="tab-btn" data-tab="weather"><span class="tab-icon"><i class="fas fa-cloud-sun"></i></span><span>날씨</span></button>
+        <div class="nav-footer">
+            <span class="storage-status"><i class="fas fa-database"></i> SQLite 연결</span>
+            <small>가족의 기록을 안전하게 보관해요</small>
+        </div>
     </nav>
 
     <main class="container">
         <!-- 1. 캘린더 & 일정 탭 -->
+        <div class="page-intro">
+            <div>
+                <span class="page-eyebrow">GOOD DAY, FAMILY</span>
+                <h2>우리 가족의 오늘을<br><em>한눈에 정리해요.</em></h2>
+                <p>일정부터 장보기까지, 필요한 기록을 빠르게 확인하고 함께 관리하세요.</p>
+            </div>
+            <div class="intro-visual" aria-hidden="true">
+                <div class="visual-card visual-card-main">
+                    <span><i class="fa-regular fa-calendar-check"></i></span>
+                    <strong>오늘의 가족 일정</strong>
+                    <small>모두의 하루를 한 곳에서</small>
+                </div>
+                <div class="visual-bubble"><i class="fas fa-heart"></i></div>
+            </div>
+        </div>
         <section id="calendar" class="tab-content active">
             <div class="tab-header">
-                <h2><i class="fas fa-calendar-alt"></i> 가족 일정</h2>
-                <button class="btn btn-primary" id="addEventBtn">+ 일정 추가</button>
+                <div><span class="section-kicker">CALENDAR</span><h2>가족 일정</h2><p>가족 모두의 약속과 중요한 날을 확인하세요.</p></div>
+                <button class="btn btn-primary" id="addEventBtn"><i class="fas fa-plus"></i> 일정 추가</button>
             </div>
 
             <!-- 미니 캘린더 -->
@@ -135,8 +169,8 @@
         <!-- 2. 메모 탭 -->
         <section id="bulletin" class="tab-content">
             <div class="tab-header">
-                <h2><i class="fas fa-thumbtack"></i>메모</h2>
-                <button class="btn btn-primary" id="addBulletinBtn">+ 메모 작성</button>
+                <div><span class="section-kicker">MEMO</span><h2>가족 메모</h2><p>함께 기억해야 할 정보와 이야기를 남겨보세요.</p></div>
+                <button class="btn btn-primary" id="addBulletinBtn"><i class="fas fa-plus"></i> 메모 작성</button>
             </div>
 
             <div class="bulletin-container">
@@ -164,10 +198,10 @@
         <!-- 3. 시간표 탭 -->
         <section id="schedule" class="tab-content">
             <div class="tab-header">
-                <h2><i class="fas fa-hourglass-end"></i> 아이들 시간표</h2>
-                <div>
-                    <button class="btn btn-secondary" id="addScheduleMemberBtn">+ 이름 추가</button>
-                    <button class="btn btn-primary" id="addScheduleBtn">+ 시간표 추가</button>
+                <div><span class="section-kicker">TIMETABLE</span><h2>아이들 시간표</h2><p>학교와 학원 일정을 요일별로 편하게 살펴보세요.</p></div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="addScheduleMemberBtn"><i class="fas fa-user-plus"></i> 이름 추가</button>
+                    <button class="btn btn-primary" id="addScheduleBtn"><i class="fas fa-plus"></i> 시간표 추가</button>
                 </div>
             </div>
 
@@ -224,8 +258,8 @@
         <!-- 4. 할 일 탭 -->
         <section id="todos" class="tab-content">
             <div class="tab-header">
-                <h2><i class="fas fa-list-check"></i> 할 일 목록</h2>
-                <button class="btn btn-primary" id="addTodoBtn">+ 할일 추가</button>
+                <div><span class="section-kicker">TO DO</span><h2>할 일 목록</h2><p>작은 일도 놓치지 않도록 가족의 할 일을 챙겨요.</p></div>
+                <button class="btn btn-primary" id="addTodoBtn"><i class="fas fa-plus"></i> 할 일 추가</button>
             </div>
 
             <div class="filter-buttons">
@@ -243,6 +277,7 @@
                     <h2>할 일 추가</h2>
                     <form id="todoForm">
                         <input type="text" id="todoTitle" placeholder="할 일 내용" required>
+                        <input type="text" id="todoAssignee" placeholder="담당자 (선택)">
                         <input type="date" id="todoDueDate" required>
                         <select id="todoPriority">
                             <option value="low">낮음</option>
@@ -258,8 +293,8 @@
         <!-- 5. 쇼핑 리스트 탭 -->
         <section id="shopping" class="tab-content">
             <div class="tab-header">
-                <h2><i class="fas fa-shopping-cart"></i> 쇼핑 리스트</h2>
-                <button type="button" class="btn btn-primary" id="addShoppingBtn">+ 아이템 추가</button>
+                <div><span class="section-kicker">SHOPPING</span><h2>쇼핑 리스트</h2><p>필요한 물건과 예상 금액을 간단하게 정리하세요.</p></div>
+                <button type="button" class="btn btn-primary" id="addShoppingBtn"><i class="fas fa-plus"></i> 아이템 추가</button>
             </div>
 
             <div class="shopping-container">
@@ -273,7 +308,7 @@
         <!-- 6. 날씨 탭 -->
         <section id="weather" class="tab-content">
             <div class="tab-header">
-                <h2><i class="fas fa-cloud-sun"></i> 날씨</h2>
+                <div><span class="section-kicker">WEATHER</span><h2>우리 동네 날씨</h2><p>외출 전에 현재 날씨와 이번 주 예보를 확인하세요.</p></div>
                 <div class="weather-search">
                     <input type="text" id="weatherLocation" placeholder="지역명 입력 (예: 수원)" class="weather-input">
                     <button id="weatherSearchBtn" class="btn btn-primary">검색</button>
@@ -310,5 +345,12 @@
     <!-- Firebase 스크립트 -->
     <script type="module" src="firebase-config.js"></script>
     <script src="app.js?v=shopping-modal"></script>
+    <script>
+        const now = new Date();
+        document.getElementById('headerDate').textContent =
+            new Intl.DateTimeFormat('ko-KR', { month: 'long', day: 'numeric' }).format(now);
+        document.getElementById('headerWeekday').textContent =
+            new Intl.DateTimeFormat('ko-KR', { weekday: 'long' }).format(now);
+    </script>
 </body>
 </html>

@@ -25,3 +25,10 @@ npm-debug.log*
 
 # Firebase
 firebase-debug.log
+
+# SQLite runtime data
+family_hub.db
+family_hub.db-shm
+family_hub.db-wal
+__pycache__/
+*.pyc

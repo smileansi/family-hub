@@ -1,32 +1,14 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import json
-import os
 from datetime import datetime
+from database import init_db, load_data, save_data
 
 app = Flask(__name__)
 
 # CORS 설정 - 모든 출처에서의 요청 허용
 CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "DELETE", "PUT"], "allow_headers": ["Content-Type"]}})
 
-DATA_FILE = 'family_data.json'
-
-def load_data():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return {
-        'events': [],
-        'bulletins': [],
-        'schedules': [],
-        'scheduleMembers': [],
-        'todos': [],
-        'shopping': []
-    }
-
-def save_data(data):
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+init_db()
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
@@ -34,7 +16,9 @@ def get_data():
 
 @app.route('/api/data', methods=['POST'])
 def update_data():
-    data = request.json
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({'success': False, 'error': 'JSON object required'}), 400
     save_data(data)
     return jsonify({'success': True})
 
