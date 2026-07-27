@@ -3,12 +3,22 @@ Description=Family Hub Gunicorn Server
 After=network.target
 
 [Service]
-User=smileansi
-Group=smileansi
-WorkingDirectory=/home/smileansi/family-hub/family-hub
-Environment="PATH=/home/smileansi/family-hub/family-hub/venv/bin"
-ExecStart=/home/smileansi/family-hub/family-hub/venv/bin/gunicorn --workers 3 --bind unix:family-hub.sock -m 007 server:app
-Restart=always
+Type=simple
+User=__APP_USER__
+Group=www-data
+WorkingDirectory=__APP_DIR__
+Environment="PATH=__APP_DIR__/venv/bin"
+RuntimeDirectory=family-hub
+RuntimeDirectoryMode=0755
+UMask=0007
+ExecStart=__APP_DIR__/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/run/family-hub/family-hub.sock \
+    --access-logfile - \
+    --error-logfile - \
+    server:app
+Restart=on-failure
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target

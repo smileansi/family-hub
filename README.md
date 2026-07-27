@@ -76,6 +76,33 @@ python server.py
 브라우저에서 `http://localhost:5000`으로 접속합니다. `index.html`을
 직접 열거나 단순 정적 서버로 실행하면 SQLite API에 연결되지 않습니다.
 
+### Ubuntu 서버 배포
+
+저장소를 서버에 복제한 디렉터리에서 실행합니다.
+
+```bash
+bash deploy.sh
+```
+
+원격 브랜치까지 자동으로 갱신하려면 다음처럼 실행합니다.
+
+```bash
+DEPLOY_BRANCH=master bash deploy.sh
+```
+
+실험 디자인 브랜치를 배포할 때는 `master` 대신
+`codex/family-planner-redesign`을 지정합니다. 배포 스크립트는 현재
+디렉터리를 자동으로 감지하며 systemd 서비스와 Nginx 설정을 갱신한 뒤
+API 상태까지 확인합니다.
+
+배포 실패 시 다음 명령으로 원인을 확인할 수 있습니다.
+
+```bash
+sudo systemctl status family-hub --no-pager
+sudo journalctl -u family-hub -n 100 --no-pager
+sudo nginx -t
+```
+
 ### Firebase로 업그레이드 (실시간 동기화)
 
 1. **Firebase 프로젝트 생성**
