@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>시안 01 · Calm Command Center</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="calm">
+  <div class="app">
+    <aside>
+      <a class="brand" href="index.html"><b>H</b><span>HOME<br><small>Family hub</small></span></a>
+      <nav>
+        <button class="active">⌂ <span>오늘</span></button><button>▦ <span>캘린더</span></button>
+        <button>✓ <span>할 일</span></button><button>▤ <span>시간표</span></button>
+        <button>□ <span>메모</span></button><button>◌ <span>장보기</span></button>
+      </nav>
+      <div class="family"><span>우리 가족</span><div><i class="av a1">아</i><i class="av a2">엄</i><i class="av a3">도</i><i class="av a4">수</i></div></div>
+    </aside>
+    <main>
+      <header><div><small>2026년 7월 25일 토요일</small><h1>좋은 아침이에요.</h1></div><button class="add">＋ 새 기록</button></header>
+      <section class="weather-strip"><div><span>현재 다산동</span><b>27°</b><small>구름 조금 · 최고 31°</small></div><div class="sun">☀</div></section>
+      <div class="columns">
+        <section class="panel agenda"><div class="panel-head"><div><small>TODAY</small><h2>오늘 일정</h2></div><button>전체보기</button></div>
+          <div class="event"><time>09:00</time><i class="line blue"></i><div><b>수빈이 수학 학원</b><span>안수빈 · 1시간 20분</span></div></div>
+          <div class="event"><time>14:00</time><i class="line green"></i><div><b>가족 장보기</b><span>다산 이마트</span></div></div>
+          <div class="event"><time>18:30</time><i class="line orange"></i><div><b>저녁 외식</b><span>가족 모두</span></div></div>
+        </section>
+        <section class="panel tasks"><div class="panel-head"><div><small>TO DO</small><h2>오늘 할 일</h2></div><b>2 / 4</b></div>
+          <label><input type="checkbox" checked><span>여행 숙소 예약 확인</span></label>
+          <label><input type="checkbox" checked><span>계란, 우유 주문</span></label>
+          <label><input type="checkbox"><span>도경 준비물 챙기기</span></label>
+          <label><input type="checkbox"><span>공과금 납부</span></label>
+        </section>
+      </div>
+      <section class="week"><div class="panel-head"><div><small>UPCOMING</small><h2>이번 주</h2></div><button>7월 4주차⌄</button></div>
+        <div class="week-grid"><div><b>월</b><span>20</span><em></em></div><div><b>화</b><span>21</span><em class="two"></em></div><div><b>수</b><span>22</span></div><div><b>목</b><span>23</span><em></em></div><div class="today"><b>금</b><span>24</span><em class="two"></em></div><div><b>토</b><span>25</span><em></em></div><div><b>일</b><span>26</span></div></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

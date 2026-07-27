@@ -25,6 +25,8 @@ const appState = {
     currentFilter: 'all'
 };
 
+let scheduleResizeObserver = null;
+
 // 페이지 최초 접근 시 데이터 로드
 // 서버 우선 → 실패 시 localStorage 폴백
 async function loadLocalData() {
@@ -1096,19 +1098,26 @@ function renderSchedules() {
 
         assignScheduleColors();
 
-        // 카드 배치 (간단한 버전)
-        setTimeout(() => {
+        const positionScheduleCards = () => {
             try {
-                const headerHeight = timetable.querySelector('thead').offsetHeight;
+                const wrapper = document.querySelector('.schedule-timetable-wrapper');
                 const bodyRows = timetable.querySelectorAll('tbody tr');
-                const rowHeight = bodyRows[0] ? bodyRows[0].offsetHeight : 40;
                 const headerCells = timetable.querySelectorAll('thead th');
-                const overlayHeight = headerHeight + (bodyRows.length * rowHeight);
-                
-                overlay.style.height = `${overlayHeight}px`;
-                overlay.style.width = `${timetable.offsetWidth}px`;
-                overlay.style.left = `${timetable.offsetLeft}px`;
+                if (!wrapper || !bodyRows.length) return;
+
+                const wrapperRect = wrapper.getBoundingClientRect();
+                const tableRect = timetable.getBoundingClientRect();
+                const firstRowRect = bodyRows[0].getBoundingClientRect();
+                const lastRowRect = bodyRows[bodyRows.length - 1].getBoundingClientRect();
+                const rowHeight = firstRowRect.height;
+                const bodyTop = firstRowRect.top - wrapperRect.top + wrapper.scrollTop;
+
+                overlay.innerHTML = '';
+                overlay.style.top = '0';
+                overlay.style.left = '0';
                 overlay.style.right = 'auto';
+                overlay.style.width = `${Math.max(wrapper.scrollWidth, tableRect.width)}px`;
+                overlay.style.height = `${lastRowRect.bottom - wrapperRect.top + wrapper.scrollTop}px`;
                 
                 memberSchedules.forEach(schedule => {
                     const colIndex = daysOrder.indexOf(schedule.day);
@@ -1116,20 +1125,27 @@ function renderSchedules() {
 
                     const startMinutes = parseTime(schedule.startTime);
                     const endMinutes = parseTime(schedule.endTime);
-                    const top = headerHeight + ((startMinutes - 480) / 60) * rowHeight;
-                    const height = ((endMinutes - startMinutes) / 60) * rowHeight;
+                    if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes) || endMinutes <= startMinutes) return;
+
+                    const visibleStart = Math.max(startMinutes, 8 * 60);
+                    const visibleEnd = Math.min(endMinutes, 23 * 60);
+                    if (visibleEnd <= visibleStart) return;
+
+                    const top = bodyTop + ((visibleStart - 480) / 60) * rowHeight;
+                    const height = ((visibleEnd - visibleStart) / 60) * rowHeight;
                     
                     const headerCell = headerCells[colIndex + 1];
-                    const left = headerCell.offsetLeft;
-                    const width = headerCell.offsetWidth;
+                    const headerRect = headerCell.getBoundingClientRect();
+                    const left = headerRect.left - wrapperRect.left + wrapper.scrollLeft;
+                    const width = headerRect.width;
                     
                     const card = document.createElement('div');
                     card.className = 'schedule-card';
                     card.style.position = 'absolute';
-                    card.style.top = `${top}px`;
-                    card.style.left = `${left}px`;
-                    card.style.width = `${width}px`;
-                    card.style.height = `${height}px`;
+                    card.style.top = `${top + 1}px`;
+                    card.style.left = `${left + 1}px`;
+                    card.style.width = `${Math.max(width - 2, 1)}px`;
+                    card.style.height = `${Math.max(height - 2, 2)}px`;
                     card.style.backgroundColor = getScheduleColor(schedule.activity);
                     card.title = `${schedule.startTime} ~ ${schedule.endTime}`;
                     card.innerHTML = `
@@ -1144,7 +1160,16 @@ function renderSchedules() {
             } catch (e) {
                 console.error('Card placement error:', e);
             }
-        }, 100);
+        };
+
+        requestAnimationFrame(() => requestAnimationFrame(positionScheduleCards));
+
+        if (scheduleResizeObserver) {
+            scheduleResizeObserver.disconnect();
+        }
+        scheduleResizeObserver = new ResizeObserver(positionScheduleCards);
+        scheduleResizeObserver.observe(timetable);
+        scheduleResizeObserver.observe(document.querySelector('.schedule-timetable-wrapper'));
     } catch (error) {
         console.error('Render schedules error:', error);
     }
