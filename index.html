@@ -214,6 +214,11 @@
                 <div><span class="section-kicker">MEMO</span><h2>가족 메모</h2><p>함께 기억해야 할 정보와 이야기를 남겨보세요.</p></div>
                 <button class="btn btn-primary" id="addBulletinBtn"><i class="fas fa-plus"></i> 메모 작성</button>
             </div>
+            <div class="life-section-summary memo-summary">
+                <span class="life-summary-icon"><i class="fa-regular fa-note-sticky"></i></span>
+                <div><strong id="memoSummaryCount">0개의 메모</strong><small>가족이 함께 기억할 내용을 모아두세요</small></div>
+                <span class="life-summary-label">MEMORY BOARD</span>
+            </div>
 
             <div class="bulletin-container">
                 <div id="bulletinList" class="bulletin-list"></div>
@@ -305,6 +310,11 @@
                 <div><span class="section-kicker">TO DO</span><h2>할 일 목록</h2><p>작은 일도 놓치지 않도록 가족의 할 일을 챙겨요.</p></div>
                 <button class="btn btn-primary" id="addTodoBtn"><i class="fas fa-plus"></i> 할 일 추가</button>
             </div>
+            <div class="life-section-summary todo-summary">
+                <span class="life-summary-icon"><i class="fas fa-circle-check"></i></span>
+                <div><strong id="todoSummaryText">오늘도 하나씩 완료해요</strong><small id="todoSummaryMeta">진행할 일을 확인해보세요</small></div>
+                <div class="todo-progress"><span id="todoProgressBar"></span></div>
+            </div>
 
             <div class="filter-buttons">
                 <button class="filter-btn active" data-filter="all">전체</button>
@@ -340,6 +350,11 @@
                 <div><span class="section-kicker">SHOPPING</span><h2>쇼핑 리스트</h2><p>필요한 물건과 예상 금액을 간단하게 정리하세요.</p></div>
                 <button type="button" class="btn btn-primary" id="addShoppingBtn"><i class="fas fa-plus"></i> 아이템 추가</button>
             </div>
+            <div class="life-section-summary shopping-summary">
+                <span class="life-summary-icon"><i class="fas fa-basket-shopping"></i></span>
+                <div><strong id="shoppingSummaryText">장보기 준비 중</strong><small id="shoppingSummaryMeta">필요한 물건을 추가해보세요</small></div>
+                <span class="life-summary-label">SHOPPING PLAN</span>
+            </div>
 
             <div class="shopping-container">
                 <div id="shoppingList" class="shopping-list"></div>
@@ -355,6 +370,9 @@
                 <div><span class="section-kicker">WEATHER</span><h2>우리 동네 날씨</h2><p>외출 전에 현재 날씨와 이번 주 예보를 확인하세요.</p></div>
                 <div class="weather-search">
                     <input type="text" id="weatherLocation" placeholder="지역명 입력 (예: 수원)" class="weather-input">
+                    <button type="button" id="weatherLocateBtn" class="btn btn-secondary" aria-label="현재 위치 날씨">
+                        <i class="fas fa-location-crosshairs"></i>
+                    </button>
                     <button id="weatherSearchBtn" class="btn btn-primary">검색</button>
                 </div>
             </div>

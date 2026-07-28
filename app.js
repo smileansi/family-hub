@@ -901,25 +901,53 @@ function toggleBulletin(id) {
     toggleIcon.textContent = isCollapsed ? '▲' : '▼';
 }
 
+function escapeHtml(value = '') {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function formatCompactDate(value) {
+    if (!value) return '날짜 없음';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '날짜 없음';
+    return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+}
+
 function renderBulletins() {
     const bulletinList = document.getElementById('bulletinList');
     bulletinList.innerHTML = '';
+    document.getElementById('memoSummaryCount').textContent = `${appState.bulletins.length}개의 메모`;
 
     if (appState.bulletins.length === 0) {
         bulletinList.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">작성된 메모가 없습니다.</div>';
         return;
     }
 
-    appState.bulletins.forEach(bulletin => {
+    appState.bulletins.forEach((bulletin, index) => {
         const bulletinDiv = document.createElement('div');
         bulletinDiv.className = 'bulletin-item';
+        const preview = (bulletin.content || '')
+            .replace(/[#*_>`\[\]()~-]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .slice(0, 110);
         bulletinDiv.innerHTML = `
-            <div class="bulletin-row">
-                <h3 class="bulletin-title">${bulletin.title}</h3>
+            <div class="bulletin-card-head">
+                <span class="bulletin-index">MEMO ${String(index + 1).padStart(2, '0')}</span>
                 <div class="bulletin-actions">
-                    <button class="btn btn-small" onclick="event.stopPropagation(); editBulletin(${bulletin.id})">수정</button>
-                    <button class="btn btn-small" onclick="event.stopPropagation(); deleteBulletin(${bulletin.id})">삭제</button>
+                    <button type="button" class="icon-action" aria-label="메모 수정" onclick="event.stopPropagation(); editBulletin(${bulletin.id})"><i class="fas fa-pen"></i></button>
+                    <button type="button" class="icon-action is-danger" aria-label="메모 삭제" onclick="event.stopPropagation(); deleteBulletin(${bulletin.id})"><i class="fas fa-trash"></i></button>
                 </div>
+            </div>
+            <h3 class="bulletin-title">${escapeHtml(bulletin.title)}</h3>
+            <p class="bulletin-preview">${escapeHtml(preview || '내용을 눌러 확인하세요.')}</p>
+            <div class="bulletin-card-foot">
+                <span><i class="fa-regular fa-clock"></i> ${formatCompactDate(bulletin.createdAt)}</span>
+                <span class="bulletin-open">열기 <i class="fas fa-arrow-right"></i></span>
             </div>
         `;
         bulletinDiv.addEventListener('click', () => showBulletinViewModal(bulletin.id));
@@ -954,7 +982,7 @@ function editBulletin(id) {
     const contentInput = document.getElementById('editBulletinContent');
     titleInput.value = bulletin.title;
     contentInput.value = bulletin.content;
-    modal.style.display = 'block';
+    modal.classList.add('show');
 
     // Save handler
     const form = document.getElementById('editBulletinForm');
@@ -966,14 +994,14 @@ function editBulletin(id) {
         bulletin.content = contentInput.value;
         saveLocalData();
         renderBulletins();
-        modal.style.display = 'none';
+        modal.classList.remove('show');
     };
     closeBtn.onclick = function() {
-        modal.style.display = 'none';
+        modal.classList.remove('show');
     };
-    window.onclick = function(event) {
+    modal.onclick = function(event) {
         if (event.target === modal) {
-            modal.style.display = 'none';
+            modal.classList.remove('show');
         }
     };
 }
@@ -1448,6 +1476,12 @@ function handleAddTodo() {
 function renderTodos() {
     const todoList = document.getElementById('todoList');
     todoList.innerHTML = '';
+    const completedCount = appState.todos.filter(todo => todo.completed).length;
+    const activeCount = appState.todos.length - completedCount;
+    const progress = appState.todos.length ? Math.round((completedCount / appState.todos.length) * 100) : 0;
+    document.getElementById('todoSummaryText').textContent = `${activeCount}개의 할 일이 남았어요`;
+    document.getElementById('todoSummaryMeta').textContent = `전체 ${appState.todos.length}개 중 ${completedCount}개 완료`;
+    document.getElementById('todoProgressBar').style.width = `${progress}%`;
 
     let filtered = appState.todos;
     
@@ -1465,23 +1499,20 @@ function renderTodos() {
     filtered.forEach(todo => {
         const todoDiv = document.createElement('div');
         todoDiv.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+        const priorityLabel = todo.priority === 'high' ? '중요' : todo.priority === 'medium' ? '보통' : '여유';
         
         todoDiv.innerHTML = `
             <input type="checkbox" class="todo-checkbox" ${todo.completed ? 'checked' : ''} 
-                onchange="toggleTodo(${todo.id})">
+                onchange="toggleTodo(${todo.id})" aria-label="${escapeHtml(todo.title)} 완료">
             <div class="todo-content">
-                <div class="todo-title">${todo.title}</div>
+                <div class="todo-title">${escapeHtml(todo.title)}</div>
                 <div class="todo-meta">
-                    👤 ${todo.assignee} · 📅 ${todo.dueDate}
+                    <span><i class="fa-regular fa-user"></i> ${escapeHtml(todo.assignee)}</span>
+                    <span><i class="fa-regular fa-calendar"></i> ${formatCompactDate(todo.dueDate)}</span>
                 </div>
             </div>
-            <span class="todo-priority ${todo.priority}">${
-                todo.priority === 'high' ? '높음' : 
-                todo.priority === 'medium' ? '중간' : '낮음'
-            }</span>
-            <div class="event-actions">
-                <button class="btn btn-small btn-danger" onclick="deleteTodo(${todo.id})">삭제</button>
-            </div>
+            <span class="todo-priority ${todo.priority}">${priorityLabel}</span>
+            <button type="button" class="icon-action is-danger todo-delete" aria-label="할 일 삭제" onclick="deleteTodo(${todo.id})"><i class="fas fa-trash"></i></button>
         `;
         
         todoList.appendChild(todoDiv);
@@ -1545,6 +1576,12 @@ function handleAddShopping() {
 function renderShopping() {
     const shoppingList = document.getElementById('shoppingList');
     shoppingList.innerHTML = '';
+    const pendingItems = appState.shopping.filter(shop => !shop.purchased);
+    const purchasedCount = appState.shopping.length - pendingItems.length;
+    document.getElementById('shoppingSummaryText').textContent = `${pendingItems.length}개를 구매할 예정이에요`;
+    document.getElementById('shoppingSummaryMeta').textContent = purchasedCount
+        ? `${purchasedCount}개 구매 완료`
+        : '체크하면 구매 완료로 정리돼요';
 
     if (appState.shopping.length === 0) {
         shoppingList.innerHTML = '<div class="empty-state">쇼핑 리스트가 비어있습니다.</div>';
@@ -1557,20 +1594,26 @@ function renderShopping() {
         shopDiv.className = `shopping-item ${shop.purchased ? 'completed' : ''}`;
 
         const totalPrice = shop.price * shop.qty;
+        const categoryIcons = {
+            '식품': 'fa-apple-whole',
+            '생활용품': 'fa-pump-soap',
+            '의류': 'fa-shirt',
+            '전자제품': 'fa-plug'
+        };
+        const categoryIcon = categoryIcons[shop.category] || 'fa-bag-shopping';
 
         shopDiv.innerHTML = `
+            <span class="shopping-category-icon"><i class="fas ${categoryIcon}"></i></span>
             <div class="shopping-item-content">
                 <input type="checkbox" class="shopping-checkbox" ${shop.purchased ? 'checked' : ''}
-                    onchange="toggleShopping(${shop.id})">
+                    onchange="toggleShopping(${shop.id})" aria-label="${escapeHtml(shop.item)} 구매 완료">
                 <div class="shopping-details">
-                    <div class="shopping-item-name">${shop.item}</div>
-                    <div class="shopping-item-category">${shop.category} · 수량: ${shop.qty}</div>
+                    <div class="shopping-item-name">${escapeHtml(shop.item)}</div>
+                    <div class="shopping-item-category">${escapeHtml(shop.category)} · ${shop.qty}개</div>
                 </div>
             </div>
             <div class="shopping-price">₩${totalPrice.toLocaleString()}</div>
-            <div class="event-actions">
-                <button class="btn btn-small btn-danger" onclick="deleteShopping(${shop.id})">삭제</button>
-            </div>
+            <button type="button" class="icon-action is-danger shopping-delete" aria-label="쇼핑 항목 삭제" onclick="deleteShopping(${shop.id})"><i class="fas fa-trash"></i></button>
         `;
 
         shoppingList.appendChild(shopDiv);
@@ -1629,6 +1672,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 날씨 검색
     const weatherInput = document.getElementById('weatherLocation');
     const weatherSearchBtn = document.getElementById('weatherSearchBtn');
+    const weatherLocateBtn = document.getElementById('weatherLocateBtn');
     if (weatherInput && weatherSearchBtn) {
         weatherSearchBtn.addEventListener('click', () => {
             const loc = weatherInput.value.trim();
@@ -1641,6 +1685,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
+    weatherLocateBtn?.addEventListener('click', requestCurrentPositionWeather);
 });
 
 // ============================================
@@ -1699,19 +1744,15 @@ function requestCurrentPositionWeather() {
 
 async function fetchWeatherByCoordinates(latitude, longitude) {
     try {
-        const response = await fetch(
-            `https://api.open-meteo.com/v1/forecast` +
-            `?latitude=${latitude}&longitude=${longitude}` +
-            `&current=temperature_2m,weather_code` +
-            `&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`
-        );
-        const weatherData = await response.json();
-        if (!response.ok || weatherData.error || !weatherData.current) {
-            throw new Error(weatherData.reason || 'Current location weather unavailable');
-        }
+        const [weatherData, place] = await Promise.all([
+            fetchWeatherForecast(latitude, longitude),
+            fetchCurrentLocationName(latitude, longitude)
+        ]);
 
         currentLocationWeatherData = weatherData;
-        updateHeaderWeatherWidget(weatherData.current, '현재 위치');
+        currentLocationWeatherPlace.name = place.name;
+        currentLocationWeatherPlace.admin1 = place.admin1;
+        updateHeaderWeatherWidget(weatherData.current, place.name);
 
         if (document.getElementById('weather')?.classList.contains('active')) {
             renderWeather(currentLocationWeatherData, currentLocationWeatherPlace);
@@ -1720,6 +1761,40 @@ async function fetchWeatherByCoordinates(latitude, longitude) {
         console.error('현재 위치 날씨 조회 실패:', error);
         updateHeaderWeatherWidget(null, '날씨 확인 실패');
     }
+}
+
+async function fetchCurrentLocationName(latitude, longitude) {
+    try {
+        const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client` +
+            `?latitude=${latitude}&longitude=${longitude}&localityLanguage=ko`
+        );
+        if (!response.ok) throw new Error('Reverse geocoding failed');
+        const location = await response.json();
+        return {
+            name: location.locality || location.city || '현재 위치',
+            admin1: location.principalSubdivision || ''
+        };
+    } catch (error) {
+        console.warn('현재 위치 이름 조회 실패:', error);
+        return { name: '현재 위치', admin1: '' };
+    }
+}
+
+async function fetchWeatherForecast(latitude, longitude) {
+    const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast` +
+        `?latitude=${latitude}&longitude=${longitude}` +
+        `&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m` +
+        `&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset` +
+        `&timezone=auto&forecast_days=7`
+    );
+    const weatherData = await response.json();
+    if (!response.ok || weatherData.error || !weatherData.current) {
+        throw new Error(weatherData.reason || 'Weather unavailable');
+    }
+    return weatherData;
 }
 
 function updateHeaderWeatherWidget(current, status) {
@@ -1751,15 +1826,7 @@ async function fetchWeather(location) {
         }
 
         const place = geoData.results[0];
-        const weatherResp = await fetch(
-            `https://api.open-meteo.com/v1/forecast` +
-            `?latitude=${place.latitude}&longitude=${place.longitude}` +
-            `&current=temperature_2m,weather_code` +
-            `&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Seoul`
-        );
-        const weatherData = await weatherResp.json();
-
-        if (weatherData.error) throw new Error(weatherData.error);
+        const weatherData = await fetchWeatherForecast(place.latitude, place.longitude);
 
         // 지역 저장 (서버 JSON에 반영)
         appState.weatherLocation = location;
@@ -1787,45 +1854,84 @@ function renderWeather(data, place) {
     }
 
     const current = data.current;
+    const hourly = data.hourly;
     const daily = data.daily;
-
     const weatherDescription = getWeatherDescription(current.weather_code);
     const weatherIcon = getWeatherIcon(current.weather_code);
+    const locationLabel = [place?.name, place?.admin1 || place?.country]
+        .filter(Boolean)
+        .filter((value, index, values) => values.indexOf(value) === index)
+        .join(', ') || '현재 위치';
 
-    // 일별 예보
-    let dailyForecast = '';
-    if (daily && daily.time && daily.weather_code) {
-        for (let i = 1; i < 5 && i < daily.time.length; i++) {
-            const icon = getWeatherIcon(daily.weather_code[i]);
-            const maxTemp = daily.temperature_2m_max ? daily.temperature_2m_max[i] : '--';
-            const minTemp = daily.temperature_2m_min ? daily.temperature_2m_min[i] : '--';
-            dailyForecast += `
-                <div class="forecast-item">
-                    <div class="forecast-day">${new Date(daily.time[i]).toLocaleDateString('ko-KR', {weekday: 'short'})}</div>
-                    <div class="forecast-icon">${icon}</div>
-                    <div class="forecast-temp">${maxTemp}°/${minTemp}°</div>
-                </div>
-            `;
-        }
-    }
+    const currentHour = current.time?.slice(0, 13);
+    const today = current.time?.slice(0, 10);
+    const hourlyIndexes = (hourly?.time || [])
+        .map((time, index) => ({ time, index }))
+        .filter(item => item.time.startsWith(today) && item.time.slice(0, 13) >= currentHour)
+        .slice(0, 12);
+
+    const hourlyForecast = hourlyIndexes.map(({ time, index }, itemIndex) => `
+        <article class="weather-hour-card${itemIndex === 0 ? ' is-now' : ''}">
+            <span class="weather-hour-time">${itemIndex === 0 ? '지금' : `${time.slice(11, 13)}시`}</span>
+            <span class="weather-hour-icon">${getWeatherIcon(hourly.weather_code[index])}</span>
+            <strong>${Math.round(hourly.temperature_2m[index])}°</strong>
+            <span class="weather-hour-rain"><i class="fas fa-droplet"></i> ${hourly.precipitation_probability[index] ?? 0}%</span>
+        </article>
+    `).join('');
+
+    const dailyForecast = (daily?.time || []).slice(0, 7).map((date, index) => {
+        const label = index === 0
+            ? '오늘'
+            : new Date(`${date}T00:00:00`).toLocaleDateString('ko-KR', { weekday: 'short' });
+        return `
+            <article class="weather-day-row${index === 0 ? ' is-today' : ''}">
+                <strong>${label}</strong>
+                <span class="weather-day-date">${date.slice(5).replace('-', '.')}</span>
+                <span class="weather-day-icon">${getWeatherIcon(daily.weather_code[index])}</span>
+                <span class="weather-day-condition">${getWeatherDescription(daily.weather_code[index])}</span>
+                <span class="weather-day-rain"><i class="fas fa-droplet"></i> ${daily.precipitation_probability_max?.[index] ?? 0}%</span>
+                <span class="weather-day-temp"><b>${Math.round(daily.temperature_2m_max[index])}°</b> <em>${Math.round(daily.temperature_2m_min[index])}°</em></span>
+            </article>
+        `;
+    }).join('');
 
     container.innerHTML = `
-        <div class="weather-main">
-            <div class="weather-info">
-                <div class="weather-icon">${weatherIcon}</div>
-                <div class="weather-details">
-                    <div class="weather-location">${place.name}, ${place.admin1 || place.country}</div>
-                    <div class="weather-temp">${current.temperature_2m}°C</div>
-                    <div class="weather-description">${weatherDescription}</div>
+        <div class="weather-dashboard">
+            <section class="weather-now-card">
+                <div class="weather-now-top">
+                    <div>
+                        <span class="weather-now-label"><i class="fas fa-location-dot"></i> ${locationLabel}</span>
+                        <h3>${weatherDescription}</h3>
+                        <p>오늘 외출 전 날씨를 확인해보세요.</p>
+                    </div>
+                    <span class="weather-now-icon">${weatherIcon}</span>
                 </div>
-            </div>
-            
-            <div class="weather-section">
-                <div class="weather-section-title">📅 일별 예보</div>
-                <div class="weather-forecast">
-                    ${dailyForecast}
+                <div class="weather-now-main">
+                    <strong>${Math.round(current.temperature_2m)}<sup>°</sup></strong>
+                    <span>체감 ${Math.round(current.apparent_temperature)}°</span>
                 </div>
-            </div>
+                <div class="weather-now-stats">
+                    <span><i class="fas fa-droplet"></i><small>습도</small><b>${current.relative_humidity_2m}%</b></span>
+                    <span><i class="fas fa-wind"></i><small>바람</small><b>${Math.round(current.wind_speed_10m)} km/h</b></span>
+                    <span><i class="fas fa-cloud-rain"></i><small>강수확률</small><b>${hourly?.precipitation_probability?.[hourlyIndexes[0]?.index] ?? 0}%</b></span>
+                </div>
+            </section>
+
+            <section class="weather-panel weather-hourly-panel">
+                <div class="weather-panel-heading">
+                    <div><span>TODAY</span><h3>오늘 시간대별 날씨</h3></div>
+                    <small>현재 시각 이후</small>
+                </div>
+                <div class="weather-hourly-scroll">${hourlyForecast || '<p class="weather-empty">오늘의 시간대별 예보가 끝났어요.</p>'}</div>
+            </section>
+
+            <section class="weather-panel weather-weekly-panel">
+                <div class="weather-panel-heading">
+                    <div><span>7 DAYS</span><h3>주간 예보</h3></div>
+                    <small>최고·최저 기온</small>
+                </div>
+                <div class="weather-week-list">${dailyForecast}</div>
+            </section>
         </div>
     `;
 }
