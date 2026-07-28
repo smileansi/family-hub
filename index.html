@@ -118,49 +118,83 @@
 
                 <!-- 일정 리스트 -->
                 <div class="events-list">
-                    <h3>이번 달 일정</h3>
+                    <div class="events-list-head">
+                        <div>
+                            <span>MONTHLY AGENDA</span>
+                            <h3>이번 달 일정</h3>
+                        </div>
+                        <small>날짜를 눌러 바로 추가할 수 있어요</small>
+                    </div>
                     <div id="eventsList" class="events-container"></div>
                 </div>
             </div>
 
             <!-- 일정 보기 모달 -->
-            <div id="eventViewModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2 id="eventViewDate">일정 보기</h2>
+            <div id="eventViewModal" class="modal event-sheet-modal">
+                <div class="modal-content event-day-sheet">
+                    <button type="button" class="close" aria-label="닫기">&times;</button>
+                    <span class="sheet-kicker">DAY SCHEDULE</span>
+                    <h2 id="eventViewDate">선택한 날짜</h2>
                     <div id="eventViewList" class="events-container"></div>
+                    <button type="button" class="btn btn-primary event-sheet-add" id="addEventForDateBtn">
+                        <i class="fas fa-plus"></i> 이 날짜에 일정 추가
+                    </button>
                 </div>
             </div>
 
             <!-- 일정 추가 모달 -->
-            <div id="eventModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>일정 추가</h2>
-                    <form id="eventForm">
-                        <input type="text" id="eventTitle" placeholder="일정 제목" required>
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <label style="display: flex; align-items: center;">
-                                <input type="checkbox" id="eventAllDay"> 종일
+            <div id="eventModal" class="modal event-sheet-modal">
+                <div class="modal-content event-editor-sheet">
+                    <button type="button" class="close" aria-label="닫기">&times;</button>
+                    <span class="sheet-kicker">NEW SCHEDULE</span>
+                    <h2>새 일정</h2>
+                    <p class="sheet-description">필요한 정보만 간단히 입력하세요.</p>
+                    <form id="eventForm" class="event-form">
+                        <label class="event-field event-field-title">
+                            <span>일정 이름</span>
+                            <input type="text" id="eventTitle" placeholder="예: 가족 외식, 병원 예약" autocomplete="off" required>
+                        </label>
+                        <div class="event-form-row event-date-row">
+                            <label class="event-field">
+                                <span>시작일</span>
+                                <input type="date" id="eventStartDate" required>
+                            </label>
+                            <label class="event-field">
+                                <span>종료일</span>
+                                <input type="date" id="eventEndDate">
                             </label>
                         </div>
-                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <input type="date" id="eventStartDate" required>
-                            <span>~</span>
-                            <input type="date" id="eventEndDate">
+                        <label class="event-all-day">
+                            <span>
+                                <strong>하루 종일</strong>
+                                <small>시간을 지정하지 않는 일정이에요</small>
+                            </span>
+                            <input type="checkbox" id="eventAllDay">
+                        </label>
+                        <div id="timeInputs" class="event-form-row event-time-row">
+                            <label class="event-field">
+                                <span>시작 시간</span>
+                                <input type="time" id="eventStartTime">
+                            </label>
+                            <label class="event-field">
+                                <span>종료 시간</span>
+                                <input type="time" id="eventEndTime">
+                            </label>
                         </div>
-                        <div id="timeInputs" style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <input type="time" id="eventStartTime">
-                            <span>~</span>
-                            <input type="time" id="eventEndTime">
+                        <label class="event-field">
+                            <span>누구의 일정인가요?</span>
+                            <select id="eventFamily">
+                                <option value="전체" selected>가족 전체</option>
+                            </select>
+                        </label>
+                        <label class="event-field">
+                            <span>메모 <small>(선택)</small></span>
+                            <textarea id="eventDesc" placeholder="장소나 준비물을 적어두세요" rows="3"></textarea>
+                        </label>
+                        <div class="event-form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancelEventBtn">취소</button>
+                            <button type="submit" class="btn btn-primary">일정 저장</button>
                         </div>
-                        <textarea id="eventDesc" placeholder="상세 내용" rows="3"></textarea>
-                        <label for="eventFamily" style="display: block; margin: 8px 0 4px; font-size: 0.9em; color: #555;">누구의 일정</label>
-                        <select id="eventFamily" style="width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box;">
-                            <option value="">가족 멤버 선택</option>
-                            <option value="전체" selected>전체</option>
-                        </select>
-                        <button type="submit" class="btn btn-primary">저장</button>
                     </form>
                 </div>
             </div>
@@ -213,14 +247,13 @@
 
             <div class="schedule-timetable-wrapper">
                 <div id="scheduleList" class="schedule-list"></div>
-                <div id="scheduleOverlay" class="schedule-overlay"></div>
             </div>
 
             <!-- 시간표 추가 모달 -->
             <div id="scheduleModal" class="modal">
                 <div class="modal-content">
                     <span class="close">&times;</span>
-                    <h2>시간표 추가</h2>
+                    <h2 id="scheduleFormTitle">시간표 추가</h2>
                     <form id="scheduleForm">
                         <select id="scheduleDay" required>
                             <option value="">요일 선택</option>
@@ -237,7 +270,7 @@
                             <input type="time" id="scheduleEndTime" required>
                         </div>
                         <input type="text" id="scheduleActivity" placeholder="활동 내용" required>
-                        <button type="submit" class="btn btn-primary">저장</button>
+                        <button type="submit" class="btn btn-primary" id="scheduleSubmitBtn">저장</button>
                     </form>
                 </div>
             </div>
@@ -250,7 +283,10 @@
                     <div class="schedule-detail-item"><strong>요일</strong> <span id="scheduleDetailDay"></span></div>
                     <div class="schedule-detail-item"><strong>시간</strong> <span id="scheduleDetailTime"></span></div>
                     <div class="schedule-detail-item"><strong>활동</strong> <span id="scheduleDetailActivity"></span></div>
-                    <button id="scheduleDeleteBtn" class="btn btn-danger" style="margin-top: 16px; width: 100%;">삭제</button>
+                    <div class="schedule-detail-actions">
+                        <button type="button" id="scheduleEditBtn" class="btn btn-primary">수정</button>
+                        <button type="button" id="scheduleDeleteBtn" class="btn btn-danger">삭제</button>
+                    </div>
                 </div>
             </div>
         </section>

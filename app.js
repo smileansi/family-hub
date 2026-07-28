@@ -224,17 +224,41 @@ function initSwipe() {
 // 모달 관리
 // ============================================
 function setupModals() {
-    // 이벤트 모달
-    setupModal('eventModal', 'addEventBtn', 'eventForm', handleAddEvent);
+    setupEventModals();
+
+    // 공지 모달
+    setupModal('bulletinModal', 'addBulletinBtn', 'bulletinForm', handleAddBulletin);
+
+    // 시간표 모달
+    setupScheduleModal();
     
-    // 종일 체크박스 이벤트
+    // 할일 모달
+    setupModal('todoModal', 'addTodoBtn', 'todoForm', handleAddTodo);
+
+    setupModal('shoppingModal', 'addShoppingBtn', 'shoppingForm', handleAddShopping);
+}
+
+function toLocalDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function setupEventModals() {
+    const modal = document.getElementById('eventModal');
+    const form = document.getElementById('eventForm');
+    const addButton = document.getElementById('addEventBtn');
+    const addForDateButton = document.getElementById('addEventForDateBtn');
+    const cancelButton = document.getElementById('cancelEventBtn');
+    const closeButton = modal.querySelector('.close');
     const allDayCheckbox = document.getElementById('eventAllDay');
     const timeInputs = document.getElementById('timeInputs');
+
     allDayCheckbox.addEventListener('change', () => {
-        timeInputs.style.display = allDayCheckbox.checked ? 'none' : 'flex';
+        timeInputs.classList.toggle('is-hidden', allDayCheckbox.checked);
     });
 
-    // 시작일 입력 시 종료일 자동 동기화
     const eventStartDate = document.getElementById('eventStartDate');
     const eventEndDate = document.getElementById('eventEndDate');
     eventStartDate.addEventListener('change', () => {
@@ -242,17 +266,41 @@ function setupModals() {
             eventEndDate.value = eventStartDate.value;
         }
     });
-    
-    // 공지 모달
-    setupModal('bulletinModal', 'addBulletinBtn', 'bulletinForm', handleAddBulletin);
-    
-    // 시간표 모달
-    setupModal('scheduleModal', 'addScheduleBtn', 'scheduleForm', handleAddSchedule);
-    
-    // 할일 모달
-    setupModal('todoModal', 'addTodoBtn', 'todoForm', handleAddTodo);
 
-    setupModal('shoppingModal', 'addShoppingBtn', 'shoppingForm', handleAddShopping);
+    addButton.addEventListener('click', () => openEventForm(toLocalDateString(new Date())));
+    addForDateButton.addEventListener('click', () => {
+        const selectedDate = addForDateButton.dataset.date || toLocalDateString(new Date());
+        document.getElementById('eventViewModal').classList.remove('show');
+        openEventForm(selectedDate);
+    });
+
+    const closeEditor = () => modal.classList.remove('show');
+    closeButton.addEventListener('click', closeEditor);
+    cancelButton.addEventListener('click', closeEditor);
+    modal.addEventListener('click', event => {
+        if (event.target === modal) closeEditor();
+    });
+
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+        handleAddEvent();
+        closeEditor();
+        form.reset();
+        timeInputs.classList.remove('is-hidden');
+    });
+}
+
+function openEventForm(dateString) {
+    const form = document.getElementById('eventForm');
+    const modal = document.getElementById('eventModal');
+    const timeInputs = document.getElementById('timeInputs');
+    form.reset();
+    document.getElementById('eventStartDate').value = dateString;
+    document.getElementById('eventEndDate').value = dateString;
+    document.getElementById('eventFamily').value = '전체';
+    timeInputs.classList.remove('is-hidden');
+    modal.classList.add('show');
+    requestAnimationFrame(() => document.getElementById('eventTitle').focus());
 }
 
 function setupModal(modalId, btnId, formId, submitHandler) {
@@ -359,7 +407,12 @@ function updateCalendarView() {
 function createCalendarDay(date, isOtherMonth, year, month) {
     const dayDiv = document.createElement('div');
     dayDiv.className = 'calendar-day';
-    dayDiv.textContent = date;
+    const normalizedDate = new Date(year, month, date);
+    const dayNumber = document.createElement('span');
+    dayNumber.className = 'calendar-day-number';
+    dayNumber.textContent = date;
+    dayDiv.appendChild(dayNumber);
+    dayDiv.dataset.date = toLocalDateString(normalizedDate);
     
     if (isOtherMonth) {
         dayDiv.classList.add('other-month');
@@ -383,20 +436,100 @@ function createCalendarDay(date, isOtherMonth, year, month) {
         } else {
             dayDiv.classList.add('has-events');
         }
-        if (normalEvents.length > 0) {
-            const eventIndicator = document.createElement('div');
-            eventIndicator.className = 'event-indicator';
-            eventIndicator.textContent = normalEvents.length;
-            dayDiv.appendChild(eventIndicator);
-        }
+        renderCalendarEventTitles(dayDiv, eventsOnDay);
     }
     
-    // 날짜 클릭 시 일정 보기 모달
+    const quickAdd = document.createElement('span');
+    quickAdd.className = 'calendar-quick-add';
+    quickAdd.textContent = '+';
+    dayDiv.appendChild(quickAdd);
+
     dayDiv.addEventListener('click', () => {
-        showEventViewModal(year, month, date);
+        showEventViewModal(
+            normalizedDate.getFullYear(),
+            normalizedDate.getMonth(),
+            normalizedDate.getDate()
+        );
     });
     
     return dayDiv;
+}
+
+let editingScheduleId = null;
+
+function setupScheduleModal() {
+    const modal = document.getElementById('scheduleModal');
+    const form = document.getElementById('scheduleForm');
+    const addButton = document.getElementById('addScheduleBtn');
+    const closeButton = modal?.querySelector('.close');
+
+    if (!modal || !form || !addButton || !closeButton) return;
+
+    addButton.addEventListener('click', () => openScheduleForm());
+    closeButton.addEventListener('click', () => modal.classList.remove('show'));
+    modal.addEventListener('click', event => {
+        if (event.target === modal) modal.classList.remove('show');
+    });
+    form.addEventListener('submit', event => {
+        event.preventDefault();
+        if (handleAddSchedule()) {
+            modal.classList.remove('show');
+            form.reset();
+            editingScheduleId = null;
+        }
+    });
+}
+
+function openScheduleForm(schedule = null) {
+    const modal = document.getElementById('scheduleModal');
+    const form = document.getElementById('scheduleForm');
+    form.reset();
+    editingScheduleId = schedule?.id ?? null;
+
+    document.getElementById('scheduleFormTitle').textContent = schedule ? '시간표 수정' : '시간표 추가';
+    document.getElementById('scheduleSubmitBtn').textContent = schedule ? '수정 저장' : '저장';
+
+    if (schedule) {
+        document.getElementById('scheduleDay').value = schedule.day;
+        document.getElementById('scheduleStartTime').value = schedule.startTime;
+        document.getElementById('scheduleEndTime').value = schedule.endTime;
+        document.getElementById('scheduleActivity').value = schedule.activity;
+    }
+
+    modal.classList.add('show');
+    document.getElementById('scheduleActivity').focus();
+}
+
+function renderCalendarEventTitles(day, events) {
+    const existingList = day.querySelector('.calendar-event-list');
+    if (existingList) {
+        existingList.remove();
+    }
+
+    if (!events.length) {
+        return;
+    }
+
+    const visibleEvents = events.slice(0, 2);
+    const eventList = document.createElement('div');
+    eventList.className = 'calendar-event-list';
+
+    visibleEvents.forEach(event => {
+        const eventTitle = document.createElement('span');
+        eventTitle.className = `calendar-event-title${event.isHoliday ? ' is-holiday' : ''}`;
+        eventTitle.textContent = event.title;
+        eventTitle.title = event.title;
+        eventList.appendChild(eventTitle);
+    });
+
+    if (events.length > visibleEvents.length) {
+        const moreEvents = document.createElement('span');
+        moreEvents.className = 'calendar-event-more';
+        moreEvents.textContent = `+${events.length - visibleEvents.length}개`;
+        eventList.appendChild(moreEvents);
+    }
+
+    day.appendChild(eventList);
 }
 
 function getEventsOnDate(year, month, date) {
@@ -425,16 +558,15 @@ function renderEventsOnCalendar() {
     const calendarDays = document.querySelectorAll('.calendar-day');
     calendarDays.forEach(day => {
         // 기존 이벤트 표시 제거
-        const existingIndicator = day.querySelector('.event-indicator');
-        if (existingIndicator) {
-            existingIndicator.remove();
+        const existingList = day.querySelector('.calendar-event-list');
+        if (existingList) {
+            existingList.remove();
         }
         day.classList.remove('has-events');
         day.classList.remove('holiday');
         
         // 날짜 정보 추출
-        const dateText = day.textContent.split('\n')[0]; // 이벤트 표시가 있으면 분리
-        const date = parseInt(dateText);
+        const date = parseInt(day.querySelector('.calendar-day-number')?.textContent, 10);
         
         if (!day.classList.contains('other-month')) {
             const eventsOnDay = getEventsOnDate(currentDate.getFullYear(), currentDate.getMonth(), date);
@@ -447,13 +579,10 @@ function renderEventsOnCalendar() {
             }
             if (normalEvents.length > 0) {
                 day.classList.add('has-events');
-                const eventIndicator = document.createElement('div');
-                eventIndicator.className = 'event-indicator';
-                eventIndicator.textContent = normalEvents.length;
-                day.appendChild(eventIndicator);
             } else {
                 day.classList.remove('has-events');
             }
+            renderCalendarEventTitles(day, eventsOnDay);
         }
     });
 }
@@ -567,21 +696,42 @@ function renderEvents() {
         endDate.setHours(23, 59, 59, 999);
         const isPast = endDate < today;
 
-        eventDiv.className = 'event-item' + (isPast ? ' event-past' : '');
+        eventDiv.className = 'event-item event-agenda-item' + (isPast ? ' event-past' : '');
 
         const timeDisplay = event.allDay ? '종일' :
             (event.startTime && event.endTime ? `${event.startTime}~${event.endTime}` :
              (event.startTime || event.time || ''));
         const startDate = event.startDate || event.date;
-        const dateDisplay = startDate === (event.endDate || startDate)
-            ? startDate
-            : `${startDate}~${event.endDate || startDate}`;
-
-        eventDiv.innerHTML = `
-            <span class="event-item-date">${dateDisplay}</span>
-            <span class="event-item-time">${timeDisplay}</span>
-            <span class="event-item-title">${event.title}</span>
+        const start = new Date(`${startDate}T00:00:00`);
+        const endDateValue = event.endDate || startDate;
+        const dayBadge = document.createElement('div');
+        dayBadge.className = 'event-day-badge';
+        dayBadge.innerHTML = `
+            <strong>${start.getDate()}</strong>
+            <span>${start.toLocaleDateString('ko-KR', { weekday: 'short' })}</span>
         `;
+
+        const content = document.createElement('div');
+        content.className = 'event-agenda-content';
+        const title = document.createElement('strong');
+        title.className = 'event-item-title';
+        title.textContent = event.title;
+        const meta = document.createElement('div');
+        meta.className = 'event-agenda-meta';
+        const dateLabel = startDate === endDateValue
+            ? timeDisplay
+            : `${start.getMonth() + 1}.${start.getDate()}–${new Date(`${endDateValue}T00:00:00`).getMonth() + 1}.${new Date(`${endDateValue}T00:00:00`).getDate()} · ${timeDisplay}`;
+        meta.textContent = dateLabel;
+        content.append(title, meta);
+
+        const family = document.createElement('span');
+        family.className = 'event-family-chip';
+        family.textContent = event.family || '전체';
+
+        eventDiv.append(dayBadge, content, family);
+        eventDiv.addEventListener('click', () => {
+            showEventViewModal(start.getFullYear(), start.getMonth(), start.getDate());
+        });
         eventsList.appendChild(eventDiv);
     });
 }
@@ -608,15 +758,31 @@ function deleteEvent(id, viewContext) {
 
 function showEventViewModal(year, month, date) {
     const eventsOnDay = getEventsOnDate(year, month, date);
-    if (eventsOnDay.length === 0) return;
     
     const modal = document.getElementById('eventViewModal');
     const dateHeader = document.getElementById('eventViewDate');
     const list = document.getElementById('eventViewList');
+    const addButton = document.getElementById('addEventForDateBtn');
     
-    dateHeader.textContent = `${year}년 ${month + 1}월 ${date}일`;
+    const selectedDate = new Date(year, month, date);
+    dateHeader.textContent = selectedDate.toLocaleDateString('ko-KR', {
+        month: 'long',
+        day: 'numeric',
+        weekday: 'long'
+    });
+    addButton.dataset.date = toLocalDateString(selectedDate);
     list.innerHTML = '';
-    
+
+    if (eventsOnDay.length === 0) {
+        list.innerHTML = `
+            <div class="event-day-empty">
+                <i class="fa-regular fa-calendar"></i>
+                <strong>아직 일정이 없어요</strong>
+                <span>새 일정을 바로 추가해보세요.</span>
+            </div>
+        `;
+    }
+
     eventsOnDay.forEach(event => {
         const eventDiv = document.createElement('div');
         eventDiv.className = 'event-card';
@@ -632,7 +798,7 @@ function showEventViewModal(year, month, date) {
 
         const metaEl = document.createElement('div');
         metaEl.className = 'event-date';
-        metaEl.textContent = `📅 ${dateDisplay} ${timeDisplay}`;
+        metaEl.textContent = `${timeDisplay} · ${event.family || '전체'}`;
 
         eventDiv.appendChild(titleEl);
         eventDiv.appendChild(metaEl);
@@ -975,13 +1141,13 @@ function addScheduleMember() {
 function handleAddSchedule() {
     if (appState.scheduleMembers.length === 0) {
         alert('먼저 이름을 추가해주세요.');
-        return;
+        return false;
     }
 
     const member = appState.activeScheduleMember;
     if (!member || !appState.scheduleMembers.includes(member)) {
         alert('개별 이름 탭을 선택한 상태에서 일정을 추가해주세요.');
-        return;
+        return false;
     }
 
     const day = document.getElementById('scheduleDay').value;
@@ -991,30 +1157,33 @@ function handleAddSchedule() {
 
     if (startTime >= endTime) {
         alert('시작 시간은 끝 시간보다 빨라야 합니다.');
-        return;
+        return false;
     }
 
-    const schedule = {
-        id: Date.now(),
-        member,
-        day,
-        startTime,
-        endTime,
-        activity,
-        createdAt: new Date().toISOString()
-    };
-
-    appState.schedules.push(schedule);
+    if (editingScheduleId !== null) {
+        const schedule = appState.schedules.find(item => item.id === editingScheduleId);
+        if (!schedule) return false;
+        Object.assign(schedule, { member, day, startTime, endTime, activity });
+    } else {
+        appState.schedules.push({
+            id: Date.now(),
+            member,
+            day,
+            startTime,
+            endTime,
+            activity,
+            createdAt: new Date().toISOString()
+        });
+    }
     saveLocalData();
     renderSchedules();
+    return true;
 }
 
 function renderSchedules() {
     try {
         const scheduleList = document.getElementById('scheduleList');
-        const overlay = document.getElementById('scheduleOverlay');
         scheduleList.innerHTML = '';
-        overlay.innerHTML = '';
 
         if (appState.scheduleMembers.length === 0) {
             scheduleList.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">먼저 이름을 추가해주세요.</div>';
@@ -1046,105 +1215,115 @@ function renderSchedules() {
                 .sort((a, b) => a.startTime.localeCompare(b.startTime));
         });
 
-        const timetable = document.createElement('table');
-        timetable.className = 'timetable';
-        
-        const timeSlots = [];
-        for (let hour = 8; hour <= 22; hour++) {
-            timeSlots.push({ hour, minute: '00' });
-        }
-
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-        headerRow.className = 'timetable-header';
-        
-        const timeHeader = document.createElement('th');
-        timeHeader.className = 'timetable-time-header';
-        timeHeader.textContent = '시간';
-        headerRow.appendChild(timeHeader);
-        
-        daysOrder.forEach(day => {
-            const dayHeader = document.createElement('th');
-            dayHeader.className = 'timetable-day-header';
-            dayHeader.textContent = day;
-            headerRow.appendChild(dayHeader);
-        });
-        
-        thead.appendChild(headerRow);
-        timetable.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
-        timeSlots.forEach(slot => {
-            const row = document.createElement('tr');
-            row.className = 'timetable-row';
-            
-            const timeCell = document.createElement('td');
-            timeCell.className = 'timetable-time';
-            timeCell.textContent = `${slot.hour.toString().padStart(2, '0')}:${slot.minute}`;
-            row.appendChild(timeCell);
-            
-            daysOrder.forEach(() => {
-                const cell = document.createElement('td');
-                cell.className = 'timetable-slot';
-                row.appendChild(cell);
-            });
-            tbody.appendChild(row);
-        });
-
-        timetable.appendChild(tbody);
-        scheduleList.appendChild(timetable);
-
         assignScheduleColors();
 
-        // 카드 배치 (간단한 버전)
-        setTimeout(() => {
-            try {
-                const headerHeight = timetable.querySelector('thead').offsetHeight;
-                const bodyRows = timetable.querySelectorAll('tbody tr');
-                const rowHeight = bodyRows[0] ? bodyRows[0].offsetHeight : 40;
-                const headerCells = timetable.querySelectorAll('thead th');
-                const overlayHeight = headerHeight + (bodyRows.length * rowHeight);
-                
-                overlay.style.height = `${overlayHeight}px`;
-                overlay.style.width = `${timetable.offsetWidth}px`;
-                overlay.style.left = `${timetable.offsetLeft}px`;
-                overlay.style.right = 'auto';
-                
-                memberSchedules.forEach(schedule => {
-                    const colIndex = daysOrder.indexOf(schedule.day);
-                    if (colIndex < 0 || !headerCells[colIndex + 1]) return;
+        const startOfDay = 8 * 60;
+        const endOfDay = 23 * 60;
+        const slotMinutes = 5;
+        const totalSlots = (endOfDay - startOfDay) / slotMinutes;
 
-                    const startMinutes = parseTime(schedule.startTime);
-                    const endMinutes = parseTime(schedule.endTime);
-                    const top = headerHeight + ((startMinutes - 480) / 60) * rowHeight;
-                    const height = ((endMinutes - startMinutes) / 60) * rowHeight;
-                    
-                    const headerCell = headerCells[colIndex + 1];
-                    const left = headerCell.offsetLeft;
-                    const width = headerCell.offsetWidth;
-                    
-                    const card = document.createElement('div');
-                    card.className = 'schedule-card';
-                    card.style.position = 'absolute';
-                    card.style.top = `${top}px`;
-                    card.style.left = `${left}px`;
-                    card.style.width = `${width}px`;
-                    card.style.height = `${height}px`;
-                    card.style.backgroundColor = getScheduleColor(schedule.activity);
-                    card.title = `${schedule.startTime} ~ ${schedule.endTime}`;
-                    card.innerHTML = `
-                        <div class="schedule-card-activity">${schedule.activity}</div>
-                        <div class="schedule-card-time">${schedule.startTime} ~ ${schedule.endTime}</div>
-                    `;
-                    card.addEventListener('click', function() {
-                        openScheduleModal(schedule);
-                    });
-                    overlay.appendChild(card);
-                });
-            } catch (e) {
-                console.error('Card placement error:', e);
-            }
-        }, 100);
+        const grid = document.createElement('div');
+        grid.className = 'schedule-week-grid';
+        grid.style.setProperty('--schedule-slots', totalSlots);
+
+        const corner = document.createElement('div');
+        corner.className = 'schedule-grid-corner';
+        corner.textContent = '시간';
+        grid.appendChild(corner);
+
+        daysOrder.forEach((day, index) => {
+            const header = document.createElement('div');
+            header.className = 'schedule-grid-day';
+            header.style.gridColumn = `${index + 2}`;
+            header.textContent = day;
+            grid.appendChild(header);
+
+            const lane = document.createElement('div');
+            lane.className = 'schedule-grid-lane';
+            lane.style.gridColumn = `${index + 2}`;
+            lane.style.gridRow = `2 / span ${totalSlots}`;
+            grid.appendChild(lane);
+        });
+
+        for (let hour = 8; hour <= 22; hour++) {
+            const row = 2 + ((hour * 60 - startOfDay) / slotMinutes);
+
+            const label = document.createElement('div');
+            label.className = 'schedule-grid-time';
+            label.style.gridRow = `${row} / span ${60 / slotMinutes}`;
+            label.textContent = `${hour.toString().padStart(2, '0')}:00`;
+            grid.appendChild(label);
+
+            const line = document.createElement('div');
+            line.className = 'schedule-grid-hour-line';
+            line.style.gridRow = `${row}`;
+            grid.appendChild(line);
+        }
+
+        memberSchedules.forEach(schedule => {
+            const dayIndex = daysOrder.indexOf(schedule.day);
+            if (dayIndex < 0) return;
+
+            const rawStart = parseTime(schedule.startTime);
+            const rawEnd = parseTime(schedule.endTime);
+            if (!Number.isFinite(rawStart) || !Number.isFinite(rawEnd) || rawEnd <= rawStart) return;
+
+            const visibleStart = Math.max(rawStart, startOfDay);
+            const visibleEnd = Math.min(rawEnd, endOfDay);
+            if (visibleEnd <= visibleStart) return;
+
+            const startRow = 2 + Math.round((visibleStart - startOfDay) / slotMinutes);
+            const rowSpan = Math.max(1, Math.round((visibleEnd - visibleStart) / slotMinutes));
+
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'schedule-grid-card';
+            card.style.gridColumn = `${dayIndex + 2}`;
+            card.style.gridRow = `${startRow} / span ${rowSpan}`;
+            card.style.backgroundColor = getScheduleColor(schedule.activity);
+            card.title = `${schedule.activity} · ${schedule.startTime} ~ ${schedule.endTime}`;
+
+            const activity = document.createElement('strong');
+            activity.textContent = schedule.activity;
+            const time = document.createElement('span');
+            time.textContent = `${schedule.startTime} ~ ${schedule.endTime}`;
+            card.append(activity, time);
+            card.addEventListener('click', () => openScheduleModal(schedule));
+            grid.appendChild(card);
+        });
+
+        const mobileList = document.createElement('div');
+        mobileList.className = 'schedule-mobile-list';
+
+        daysOrder.forEach(day => {
+            const daySchedules = schedulesByDay[day];
+            if (!daySchedules.length) return;
+
+            const group = document.createElement('section');
+            group.className = 'schedule-mobile-day';
+            const heading = document.createElement('h3');
+            heading.textContent = `${day}요일`;
+            group.appendChild(heading);
+
+            daySchedules.forEach(schedule => {
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = 'schedule-mobile-card';
+                card.style.setProperty('--schedule-color', getScheduleColor(schedule.activity));
+
+                const time = document.createElement('span');
+                time.textContent = `${schedule.startTime}–${schedule.endTime}`;
+                const activity = document.createElement('strong');
+                activity.textContent = schedule.activity;
+                card.append(time, activity);
+                card.addEventListener('click', () => openScheduleModal(schedule));
+                group.appendChild(card);
+            });
+
+            mobileList.appendChild(group);
+        });
+
+        scheduleList.append(grid, mobileList);
     } catch (error) {
         console.error('Render schedules error:', error);
     }
@@ -1156,6 +1335,7 @@ function openScheduleModal(schedule) {
     const day = document.getElementById('scheduleDetailDay');
     const time = document.getElementById('scheduleDetailTime');
     const activity = document.getElementById('scheduleDetailActivity');
+    const editBtn = document.getElementById('scheduleEditBtn');
     const deleteBtn = document.getElementById('scheduleDeleteBtn');
 
     if (!modal) return;
@@ -1164,10 +1344,16 @@ function openScheduleModal(schedule) {
     time.textContent = `${schedule.startTime} ~ ${schedule.endTime}`;
     activity.textContent = schedule.activity;
 
+    if (editBtn) {
+        editBtn.onclick = () => {
+            modal.classList.remove('show');
+            openScheduleForm(schedule);
+        };
+    }
+
     if (deleteBtn) {
         deleteBtn.onclick = () => {
-            if (confirm('정말 이 시간표를 삭제하시겠습니까?')) {
-                deleteSchedule(schedule.id);
+            if (deleteSchedule(schedule.id)) {
                 modal.classList.remove('show');
             }
         };
@@ -1199,7 +1385,9 @@ function deleteSchedule(id) {
         appState.schedules = appState.schedules.filter(s => s.id !== id);
         saveLocalData();
         renderSchedules();
+        return true;
     }
+    return false;
 }
 
 // ============================================
