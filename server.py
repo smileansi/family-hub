@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
@@ -51,7 +53,13 @@ def static_files(filename):
 def index():
     with open('index.html', 'r', encoding='utf-8') as f:
         content = f.read()
+    asset_files = ('app.js', 'style.css', 'firebase-config.js')
+    asset_version = str(max(os.stat(path).st_mtime_ns for path in asset_files))
+    content = content.replace('__ASSET_VERSION__', asset_version)
     response = app.response_class(content, mimetype='text/html; charset=utf-8')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
     return response
 
 if __name__ == '__main__':

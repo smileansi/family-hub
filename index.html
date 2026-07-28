@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>패밀리 허브</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=__ASSET_VERSION__">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
@@ -46,6 +46,14 @@
                     </div>
                 </div>
                 <div class="header-right">
+                    <button type="button" class="header-weather-widget" id="headerWeatherWidget" aria-label="현재 위치 날씨 보기">
+                        <span class="header-weather-icon" id="headerWeatherIcon"><i class="fas fa-location-arrow"></i></span>
+                        <span class="header-weather-copy">
+                            <strong id="headerWeatherTemp">위치 확인 중</strong>
+                            <span id="headerWeatherDesc">현재 위치 날씨</span>
+                        </span>
+                        <i class="fas fa-chevron-right header-weather-arrow" aria-hidden="true"></i>
+                    </button>
                     <div class="today-summary">
                         <span class="today-dot"></span>
                         <div>
@@ -147,7 +155,7 @@
                 <div class="modal-content event-editor-sheet">
                     <button type="button" class="close" aria-label="닫기">&times;</button>
                     <span class="sheet-kicker">NEW SCHEDULE</span>
-                    <h2>새 일정</h2>
+                    <h2 id="eventFormTitle">새 일정</h2>
                     <p class="sheet-description">필요한 정보만 간단히 입력하세요.</p>
                     <form id="eventForm" class="event-form">
                         <label class="event-field event-field-title">
@@ -193,7 +201,7 @@
                         </label>
                         <div class="event-form-actions">
                             <button type="button" class="btn btn-secondary" id="cancelEventBtn">취소</button>
-                            <button type="submit" class="btn btn-primary">일정 저장</button>
+                            <button type="submit" class="btn btn-primary" id="eventSubmitBtn">일정 저장</button>
                         </div>
                     </form>
                 </div>
@@ -379,8 +387,8 @@
     </div>
 
     <!-- Firebase 스크립트 -->
-    <script type="module" src="firebase-config.js"></script>
-    <script src="app.js?v=shopping-modal"></script>
+    <script type="module" src="firebase-config.js?v=__ASSET_VERSION__"></script>
+    <script src="app.js?v=__ASSET_VERSION__"></script>
     <script>
         const now = new Date();
         document.getElementById('headerDate').textContent =

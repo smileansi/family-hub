@@ -2052,6 +2052,72 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .today-summary strong { font-size: 12px; line-height: 1.35; }
 .today-summary div span { color: var(--muted); font-size: 10px; }
 
+.header-weather-widget {
+    min-width: 174px;
+    min-height: 52px;
+    padding: 8px 11px;
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    gap: 9px;
+    align-items: center;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: #f7faf7;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.header-weather-widget:hover {
+    border-color: #bfd4c4;
+    box-shadow: 0 8px 22px rgba(35, 91, 67, .1);
+    transform: translateY(-1px);
+}
+
+.header-weather-icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    color: var(--green);
+    border-radius: 11px;
+    background: var(--green-soft);
+    font-size: 17px;
+}
+
+.header-weather-widget.is-ready .header-weather-icon {
+    background: #eef5e8;
+    font-size: 20px;
+}
+
+.header-weather-copy {
+    min-width: 0;
+}
+
+.header-weather-copy strong,
+.header-weather-copy span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-weather-copy strong {
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.header-weather-copy span {
+    color: var(--muted);
+    font-size: 9px;
+}
+
+.header-weather-arrow {
+    color: #a4afa7;
+    font-size: 9px;
+}
+
 .tab-nav {
     padding: 24px 14px 18px;
     gap: 6px;
@@ -2479,6 +2545,25 @@ form input::placeholder, form textarea::placeholder { color: #a0aaa3; }
     .brand-symbol { width: 38px; height: 38px; border-radius: 12px; }
     .brand-label { display: none; }
     .logo { font-size: 17px; }
+    .header-content { gap: 8px; }
+    .header-right { gap: 6px; }
+    .header-weather-widget {
+        min-width: 0;
+        width: 54px;
+        height: 46px;
+        padding: 6px;
+        display: grid;
+        grid-template-columns: 1fr;
+        place-items: center;
+    }
+    .header-weather-icon {
+        width: 26px;
+        height: 24px;
+        background: transparent;
+        font-size: 16px;
+    }
+    .header-weather-copy span, .header-weather-arrow { display: none; }
+    .header-weather-copy strong { font-size: 10px; text-align: center; }
     .today-summary { min-width: auto; padding: 7px 10px; }
     .today-dot, .today-summary div span { display: none; }
 

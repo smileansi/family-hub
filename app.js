@@ -245,6 +245,8 @@ function toLocalDateString(date) {
     return `${year}-${month}-${day}`;
 }
 
+let editingEventId = null;
+
 function setupEventModals() {
     const modal = document.getElementById('eventModal');
     const form = document.getElementById('eventForm');
@@ -283,22 +285,33 @@ function setupEventModals() {
 
     form.addEventListener('submit', event => {
         event.preventDefault();
-        handleAddEvent();
-        closeEditor();
-        form.reset();
-        timeInputs.classList.remove('is-hidden');
+        if (handleAddEvent()) {
+            closeEditor();
+            form.reset();
+            timeInputs.classList.remove('is-hidden');
+            editingEventId = null;
+        }
     });
 }
 
-function openEventForm(dateString) {
+function openEventForm(dateString, event = null) {
     const form = document.getElementById('eventForm');
     const modal = document.getElementById('eventModal');
     const timeInputs = document.getElementById('timeInputs');
     form.reset();
-    document.getElementById('eventStartDate').value = dateString;
-    document.getElementById('eventEndDate').value = dateString;
-    document.getElementById('eventFamily').value = '전체';
-    timeInputs.classList.remove('is-hidden');
+    editingEventId = event?.id ?? null;
+
+    document.getElementById('eventFormTitle').textContent = event ? '일정 수정' : '새 일정';
+    document.getElementById('eventSubmitBtn').textContent = event ? '수정 저장' : '일정 저장';
+    document.getElementById('eventTitle').value = event?.title || '';
+    document.getElementById('eventStartDate').value = event?.startDate || event?.date || dateString;
+    document.getElementById('eventEndDate').value = event?.endDate || event?.startDate || event?.date || dateString;
+    document.getElementById('eventStartTime').value = event?.startTime || event?.time || '';
+    document.getElementById('eventEndTime').value = event?.endTime || '';
+    document.getElementById('eventDesc').value = event?.desc || '';
+    document.getElementById('eventFamily').value = event?.family || '전체';
+    document.getElementById('eventAllDay').checked = Boolean(event?.allDay);
+    timeInputs.classList.toggle('is-hidden', Boolean(event?.allDay));
     modal.classList.add('show');
     requestAnimationFrame(() => document.getElementById('eventTitle').focus());
 }
@@ -597,8 +610,7 @@ function handleAddEvent() {
     const desc = document.getElementById('eventDesc').value;
     const family = document.getElementById('eventFamily')?.value;
 
-    const event = {
-        id: Date.now(),
+    const values = {
         title,
         startDate,
         endDate: endDate || startDate,
@@ -606,14 +618,24 @@ function handleAddEvent() {
         startTime,
         endTime,
         desc,
-        family: family || '전체',
-        createdAt: new Date().toISOString()
+        family: family || '전체'
     };
 
-    appState.events.push(event);
+    if (editingEventId !== null) {
+        const event = appState.events.find(item => item.id == editingEventId);
+        if (!event) return false;
+        Object.assign(event, values);
+    } else {
+        appState.events.push({
+            id: Date.now(),
+            ...values,
+            createdAt: new Date().toISOString()
+        });
+    }
     saveLocalData();
     renderEvents();
     renderEventsOnCalendar(); // 캘린더에도 표시
+    return true;
 }
 
 async function fetchKoreanHolidays(year) {
@@ -815,6 +837,15 @@ function showEventViewModal(year, month, date) {
         if (!event.isHoliday) {
             const actions = document.createElement('div');
             actions.className = 'event-actions';
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-small btn-secondary';
+            editBtn.type = 'button';
+            editBtn.textContent = '수정';
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                modal.classList.remove('show');
+                openEventForm(event.startDate || event.date, event);
+            });
             const delBtn = document.createElement('button');
             delBtn.className = 'btn btn-small btn-danger';
             delBtn.type = 'button';
@@ -823,7 +854,7 @@ function showEventViewModal(year, month, date) {
                 e.stopPropagation();
                 deleteEvent(event.id, { year, month, date });
             });
-            actions.appendChild(delBtn);
+            actions.append(editBtn, delBtn);
             eventDiv.appendChild(actions);
         }
 
@@ -1590,6 +1621,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTodos();
     renderShopping();
     initWeather();
+    initHeaderWeather();
     setupInfoModal('scheduleDetailModal');
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
@@ -1614,7 +1646,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================
 // 날씨 기능
 // ============================================
+let currentLocationWeatherData = null;
+const currentLocationWeatherPlace = { name: '현재 위치', admin1: '' };
+
 function initWeather() {
+    if (currentLocationWeatherData) {
+        renderWeather(currentLocationWeatherData, currentLocationWeatherPlace);
+        return;
+    }
+
     if (appState.weatherLocation) {
         fetchWeather(appState.weatherLocation);
     } else {
@@ -1627,6 +1667,72 @@ function initWeather() {
             </div>
         `;
     }
+}
+
+function initHeaderWeather() {
+    const widget = document.getElementById('headerWeatherWidget');
+    if (!widget) return;
+
+    widget.addEventListener('click', () => {
+        if (!currentLocationWeatherData) requestCurrentPositionWeather();
+        document.querySelector('.tab-btn[data-tab="weather"]')?.click();
+    });
+
+    requestCurrentPositionWeather();
+}
+
+function requestCurrentPositionWeather() {
+    if (!navigator.geolocation) {
+        updateHeaderWeatherWidget(null, '위치 미지원');
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        position => fetchWeatherByCoordinates(position.coords.latitude, position.coords.longitude),
+        error => {
+            const message = error.code === error.PERMISSION_DENIED ? '위치 허용 필요' : '위치 확인 실패';
+            updateHeaderWeatherWidget(null, message);
+        },
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 10 * 60 * 1000 }
+    );
+}
+
+async function fetchWeatherByCoordinates(latitude, longitude) {
+    try {
+        const response = await fetch(
+            `https://api.open-meteo.com/v1/forecast` +
+            `?latitude=${latitude}&longitude=${longitude}` +
+            `&current=temperature_2m,weather_code` +
+            `&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`
+        );
+        const weatherData = await response.json();
+        if (!response.ok || weatherData.error || !weatherData.current) {
+            throw new Error(weatherData.reason || 'Current location weather unavailable');
+        }
+
+        currentLocationWeatherData = weatherData;
+        updateHeaderWeatherWidget(weatherData.current, '현재 위치');
+
+        if (document.getElementById('weather')?.classList.contains('active')) {
+            renderWeather(currentLocationWeatherData, currentLocationWeatherPlace);
+        }
+    } catch (error) {
+        console.error('현재 위치 날씨 조회 실패:', error);
+        updateHeaderWeatherWidget(null, '날씨 확인 실패');
+    }
+}
+
+function updateHeaderWeatherWidget(current, status) {
+    const widget = document.getElementById('headerWeatherWidget');
+    const icon = document.getElementById('headerWeatherIcon');
+    const temperature = document.getElementById('headerWeatherTemp');
+    const description = document.getElementById('headerWeatherDesc');
+    if (!widget || !icon || !temperature || !description) return;
+
+    widget.classList.toggle('is-ready', Boolean(current));
+    icon.textContent = current ? getWeatherIcon(current.weather_code) : '⌖';
+    temperature.textContent = current ? `${Math.round(current.temperature_2m)}°` : status;
+    description.textContent = current ? `${getWeatherDescription(current.weather_code)} · ${status}` : '눌러서 날씨 보기';
 }
 
 async function fetchWeather(location) {
