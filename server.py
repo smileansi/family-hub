@@ -53,7 +53,17 @@ def static_files(filename):
 def index():
     with open('index.html', 'r', encoding='utf-8') as f:
         content = f.read()
-    asset_files = ('app.js', 'style.css', 'firebase-config.js')
+    asset_files = (
+        'app.js',
+        'style.css',
+        'firebase-config.js',
+        'manifest.webmanifest',
+        'favicon.ico',
+        'assets/icons/family-hub-32.png',
+        'assets/icons/family-hub-180.png',
+        'assets/icons/family-hub-192.png',
+        'assets/icons/family-hub-512.png',
+    )
     asset_version = str(max(os.stat(path).st_mtime_ns for path in asset_files))
     content = content.replace('__ASSET_VERSION__', asset_version)
     response = app.response_class(content, mimetype='text/html; charset=utf-8')
