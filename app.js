@@ -89,6 +89,7 @@ async function saveLocalData() {
         // 서버가 없으면 localStorage에 저장
         localStorage.setItem('familyHubData', JSON.stringify(data));
     }
+    renderDashboard();
 }
 
 // 한국 공휴일 추가
@@ -142,12 +143,15 @@ function initTabs() {
                 // 선택된 탭 활성화
                 button.classList.add('active');
                 document.getElementById(tabName).classList.add('active');
-                pageIntro?.classList.toggle('is-hidden', tabName !== 'calendar');
+                pageIntro?.classList.toggle('is-hidden', tabName !== 'dashboard');
 
                 // 탭 전환 시 서버에서 최신 데이터 로드 후 렌더링
                 await fetchAndUpdateFromServer();
 
                 switch(tabName) {
+                    case 'dashboard':
+                        renderDashboard();
+                        break;
                     case 'calendar':
                         renderEventsOnCalendar();
                         renderEvents();
@@ -181,7 +185,7 @@ function initTabs() {
 // 스와이프 탭 전환 (모바일)
 // ============================================
 function initSwipe() {
-    const tabOrder = ['calendar', 'bulletin', 'schedule', 'todos', 'shopping', 'weather'];
+    const tabOrder = ['dashboard', 'calendar', 'bulletin', 'schedule', 'todos', 'shopping', 'weather'];
     let touchStartX = 0;
     let touchStartY = 0;
     let touchStartTime = 0;
@@ -264,9 +268,15 @@ function setupEventModals() {
     const closeButton = modal.querySelector('.close');
     const allDayCheckbox = document.getElementById('eventAllDay');
     const timeInputs = document.getElementById('timeInputs');
+    const recurrenceSelect = document.getElementById('eventRecurrence');
+    const recurrenceEnd = document.getElementById('eventRecurrenceEnd');
 
     allDayCheckbox.addEventListener('change', () => {
         timeInputs.classList.toggle('is-hidden', allDayCheckbox.checked);
+    });
+    recurrenceSelect.addEventListener('change', () => {
+        recurrenceEnd.disabled = recurrenceSelect.value === 'none';
+        if (recurrenceEnd.disabled) recurrenceEnd.value = '';
     });
 
     const eventStartDate = document.getElementById('eventStartDate');
@@ -318,6 +328,10 @@ function openEventForm(dateString, event = null) {
     document.getElementById('eventEndTime').value = event?.endTime || '';
     document.getElementById('eventDesc').value = event?.desc || '';
     document.getElementById('eventFamily').value = event?.family || '전체';
+    document.getElementById('eventRecurrence').value = event?.recurrence || 'none';
+    document.getElementById('eventRecurrenceEnd').value = event?.recurrenceEnd || '';
+    document.getElementById('eventRecurrenceEnd').disabled = (event?.recurrence || 'none') === 'none';
+    document.getElementById('eventReminder').value = event?.reminder ?? 'none';
     document.getElementById('eventAllDay').checked = Boolean(event?.allDay);
     timeInputs.classList.toggle('is-hidden', Boolean(event?.allDay));
     modal.classList.add('show');
@@ -553,6 +567,110 @@ function renderCalendarEventTitles(day, events) {
     day.appendChild(eventList);
 }
 
+function parseLocalDate(value) {
+    const [year, month, day] = String(value).slice(0, 10).split('-').map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function daysBetween(start, end) {
+    return Math.round((end - start) / 86400000);
+}
+
+function eventOccursOnDate(event, targetDate) {
+    const startValue = event.startDate || event.date;
+    if (!startValue) return false;
+
+    const baseStart = parseLocalDate(startValue);
+    const baseEnd = parseLocalDate(event.endDate || startValue);
+    const target = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const duration = Math.max(0, daysBetween(baseStart, baseEnd));
+    const recurrence = event.recurrence || 'none';
+
+    if (recurrence === 'none') {
+        return target >= baseStart && target <= baseEnd;
+    }
+    if (target < baseStart) return false;
+    if (event.recurrenceEnd && target > parseLocalDate(event.recurrenceEnd)) return false;
+
+    if (recurrence === 'daily') return true;
+
+    if (recurrence === 'weekly') {
+        const offset = daysBetween(baseStart, target);
+        return offset % 7 <= duration;
+    }
+
+    if (recurrence === 'monthly') {
+        const occurrenceStart = new Date(
+            target.getFullYear(),
+            target.getMonth(),
+            Math.min(baseStart.getDate(), new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate())
+        );
+        const occurrenceEnd = new Date(occurrenceStart);
+        occurrenceEnd.setDate(occurrenceEnd.getDate() + duration);
+        return target >= occurrenceStart && target <= occurrenceEnd;
+    }
+
+    if (recurrence === 'yearly') {
+        const occurrenceStart = new Date(
+            target.getFullYear(),
+            baseStart.getMonth(),
+            Math.min(baseStart.getDate(), new Date(target.getFullYear(), baseStart.getMonth() + 1, 0).getDate())
+        );
+        const occurrenceEnd = new Date(occurrenceStart);
+        occurrenceEnd.setDate(occurrenceEnd.getDate() + duration);
+        return target >= occurrenceStart && target <= occurrenceEnd;
+    }
+
+    return false;
+}
+
+function isEventOccurrenceStart(event, targetDate) {
+    const startValue = event.startDate || event.date;
+    if (!startValue) return false;
+    const baseStart = parseLocalDate(startValue);
+    const target = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const recurrence = event.recurrence || 'none';
+
+    if (target < baseStart) return false;
+    if (event.recurrenceEnd && target > parseLocalDate(event.recurrenceEnd)) return false;
+    if (recurrence === 'none') return toLocalDateString(target) === toLocalDateString(baseStart);
+    if (recurrence === 'daily') return true;
+    if (recurrence === 'weekly') return daysBetween(baseStart, target) % 7 === 0;
+    if (recurrence === 'monthly') {
+        const startDay = Math.min(baseStart.getDate(), new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate());
+        return target.getDate() === startDay;
+    }
+    if (recurrence === 'yearly') {
+        const startDay = Math.min(baseStart.getDate(), new Date(target.getFullYear(), baseStart.getMonth() + 1, 0).getDate());
+        return target.getMonth() === baseStart.getMonth() && target.getDate() === startDay;
+    }
+    return false;
+}
+
+function getEventOccurrencesForMonth(year, month) {
+    const occurrences = [];
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    appState.events.filter(event => !event.isHoliday).forEach(event => {
+        for (let day = 1; day <= daysInMonth; day += 1) {
+            const occurrenceStart = new Date(year, month, day);
+            if (!isEventOccurrenceStart(event, occurrenceStart)) continue;
+            const baseStart = parseLocalDate(event.startDate || event.date);
+            const baseEnd = parseLocalDate(event.endDate || event.startDate || event.date);
+            const occurrenceEnd = new Date(occurrenceStart);
+            occurrenceEnd.setDate(occurrenceEnd.getDate() + Math.max(0, daysBetween(baseStart, baseEnd)));
+            occurrences.push({
+                ...event,
+                startDate: toLocalDateString(occurrenceStart),
+                endDate: toLocalDateString(occurrenceEnd),
+                occurrenceOf: event.id
+            });
+        }
+    });
+
+    return occurrences;
+}
+
 function getEventsOnDate(year, month, date) {
     // ISO 형식의 날짜 문자열로 비교 (시간대 문제 회피)
     const pad = (n) => String(n).padStart(2, '0');
@@ -561,11 +679,7 @@ function getEventsOnDate(year, month, date) {
 
     const eventMatches = appState.events
         .filter(event => !event.isHoliday)
-        .filter(event => {
-            const startDateStr = (event.startDate || event.date).slice(0, 10);
-            const endDateStr = (event.endDate || event.startDate || event.date).slice(0, 10);
-            return targetDateStr >= startDateStr && targetDateStr <= endDateStr;
-    });
+        .filter(event => eventOccursOnDate(event, new Date(year, month, date)));
     const holidayMatches = holidays.filter(event => {
         const startDateStr = event.startDate.slice(0, 10);
         const endDateStr = event.endDate.slice(0, 10);
@@ -617,6 +731,9 @@ function handleAddEvent() {
     const endTime = allDay ? '' : document.getElementById('eventEndTime').value;
     const desc = document.getElementById('eventDesc').value;
     const family = document.getElementById('eventFamily')?.value;
+    const recurrence = document.getElementById('eventRecurrence').value;
+    const recurrenceEnd = document.getElementById('eventRecurrenceEnd').value;
+    const reminder = document.getElementById('eventReminder').value;
 
     const values = {
         title,
@@ -626,7 +743,10 @@ function handleAddEvent() {
         startTime,
         endTime,
         desc,
-        family: family || '전체'
+        family: family || '전체',
+        recurrence,
+        recurrenceEnd,
+        reminder
     };
 
     if (editingEventId !== null) {
@@ -692,21 +812,7 @@ function renderEvents() {
     const currentYear = currentDate.getFullYear();
     const currentMonth = currentDate.getMonth();
     
-    const filteredEvents = appState.events
-        .filter(event => !event.isHoliday)
-        .filter(event => {
-            const startDate = new Date(event.startDate || event.date);
-            const endDate = new Date(event.endDate || event.startDate || event.date);
-            const eventStartMonth = startDate.getMonth();
-            const eventStartYear = startDate.getFullYear();
-            const eventEndMonth = endDate.getMonth();
-            const eventEndYear = endDate.getFullYear();
-            
-            // 일정이 현재 달과 겹치는지 확인
-            return (eventStartYear === currentYear && eventStartMonth === currentMonth) ||
-                   (eventEndYear === currentYear && eventEndMonth === currentMonth) ||
-                   (startDate <= new Date(currentYear, currentMonth + 1, 0) && endDate >= new Date(currentYear, currentMonth, 1));
-    });
+    const filteredEvents = getEventOccurrencesForMonth(currentYear, currentMonth);
 
     const sortedEvents = filteredEvents.sort((a, b) => 
         new Date(a.startDate) - new Date(b.startDate)
@@ -1654,6 +1760,166 @@ function updateShoppingTotal() {
     document.getElementById('shoppingTotal').textContent = `₩${total.toLocaleString()}`;
 }
 
+// ============================================
+// 오늘 대시보드와 일정 알림
+// ============================================
+function dashboardEmpty(message) {
+    return `<div class="dashboard-empty"><i class="fa-regular fa-circle-check"></i><span>${message}</span></div>`;
+}
+
+function dashboardRows(items) {
+    return items.map(item => `
+        <div class="dashboard-row">
+            <span class="dashboard-row-time">${escapeHtml(item.time || '종일')}</span>
+            <div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.meta || '')}</small></div>
+        </div>
+    `).join('');
+}
+
+function renderDashboard() {
+    const eventContainer = document.getElementById('dashboardEvents');
+    if (!eventContainer) return;
+
+    const today = new Date();
+    const todayString = toLocalDateString(today);
+    const weekday = ['일', '월', '화', '수', '목', '금', '토'][today.getDay()];
+    const todayEvents = getEventsOnDate(today.getFullYear(), today.getMonth(), today.getDate())
+        .filter(event => !event.isHoliday)
+        .sort((a, b) => (a.startTime || '99:99').localeCompare(b.startTime || '99:99'));
+    const todaySchedules = appState.schedules
+        .filter(schedule => schedule.day === weekday)
+        .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    const pendingTodos = appState.todos
+        .filter(todo => !todo.completed)
+        .sort((a, b) => (a.dueDate || '9999-12-31').localeCompare(b.dueDate || '9999-12-31'));
+    const pendingShopping = appState.shopping.filter(item => !item.purchased);
+
+    document.getElementById('dashboardDateText').textContent =
+        `${today.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'long' })}에 필요한 내용을 모았어요.`;
+    document.getElementById('dashboardEventCount').textContent = todayEvents.length;
+    document.getElementById('dashboardScheduleCount').textContent = todaySchedules.length;
+    document.getElementById('dashboardTodoCount').textContent = pendingTodos.length;
+    document.getElementById('dashboardShoppingCount').textContent = pendingShopping.length;
+
+    eventContainer.innerHTML = todayEvents.length
+        ? dashboardRows(todayEvents.slice(0, 5).map(event => ({
+            time: event.allDay ? '종일' : event.startTime,
+            title: event.title,
+            meta: event.family || '전체'
+        })))
+        : dashboardEmpty('오늘 등록된 일정이 없어요');
+
+    document.getElementById('dashboardSchedules').innerHTML = todaySchedules.length
+        ? dashboardRows(todaySchedules.slice(0, 5).map(schedule => ({
+            time: schedule.startTime,
+            title: schedule.activity,
+            meta: `${schedule.member} · ${schedule.endTime}까지`
+        })))
+        : dashboardEmpty('오늘 시간표가 비어 있어요');
+
+    document.getElementById('dashboardTodos').innerHTML = pendingTodos.length
+        ? dashboardRows(pendingTodos.slice(0, 5).map(todo => ({
+            time: todo.dueDate === todayString ? '오늘' : formatCompactDate(todo.dueDate),
+            title: todo.title,
+            meta: todo.assignee || '미지정'
+        })))
+        : dashboardEmpty('남은 할 일이 없어요');
+
+    document.getElementById('dashboardShopping').innerHTML = pendingShopping.length
+        ? dashboardRows(pendingShopping.slice(0, 5).map(item => ({
+            time: `${item.qty || 1}개`,
+            title: item.item,
+            meta: item.category || '기타'
+        })))
+        : dashboardEmpty('장보기 목록을 모두 완료했어요');
+}
+
+function showReminderToast(event) {
+    const toast = document.createElement('div');
+    toast.className = 'reminder-toast';
+    toast.innerHTML = `<i class="fa-regular fa-bell"></i><div><strong>${escapeHtml(event.title)}</strong><span>일정 시간이 다가왔어요</span></div>`;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('show'));
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 250);
+    }, 5000);
+}
+
+function updateNotificationButton() {
+    const button = document.getElementById('enableNotificationsBtn');
+    if (!button) return;
+    if (typeof Notification === 'undefined') {
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-regular fa-bell-slash"></i> 알림 미지원';
+        return;
+    }
+    const enabled = Notification.permission === 'granted';
+    button.classList.toggle('is-enabled', enabled);
+    button.innerHTML = enabled
+        ? '<i class="fas fa-bell"></i> 알림 사용 중'
+        : '<i class="fa-regular fa-bell"></i> 알림 켜기';
+}
+
+async function requestNotificationPermission() {
+    if (typeof Notification === 'undefined') return;
+    await Notification.requestPermission();
+    updateNotificationButton();
+}
+
+function checkEventReminders() {
+    const now = new Date();
+    const notified = new Set(JSON.parse(localStorage.getItem('familyHubNotified') || '[]'));
+    let changed = false;
+
+    for (let dayOffset = 0; dayOffset <= 1; dayOffset += 1) {
+        const occurrenceDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + dayOffset);
+        const events = getEventsOnDate(
+            occurrenceDate.getFullYear(),
+            occurrenceDate.getMonth(),
+            occurrenceDate.getDate()
+        ).filter(event => !event.isHoliday && event.reminder !== 'none' && event.reminder !== undefined);
+
+        events.forEach(event => {
+            const [hours, minutes] = (event.allDay ? '09:00' : event.startTime || '09:00').split(':').map(Number);
+            const eventTime = new Date(occurrenceDate);
+            eventTime.setHours(hours, minutes, 0, 0);
+            const reminderTime = new Date(eventTime.getTime() - Number(event.reminder) * 60000);
+            const key = `${event.id}-${toLocalDateString(occurrenceDate)}-${event.reminder}`;
+            const elapsed = now - reminderTime;
+
+            if (elapsed >= 0 && elapsed < 300000 && !notified.has(key)) {
+                showReminderToast(event);
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                    new Notification(`Family Hub · ${event.title}`, {
+                        body: event.allDay ? '오늘 예정된 일정입니다.' : `${event.startTime} 일정이 곧 시작됩니다.`,
+                        icon: '/favicon.ico'
+                    });
+                }
+                notified.add(key);
+                changed = true;
+            }
+        });
+    }
+
+    if (changed) {
+        localStorage.setItem('familyHubNotified', JSON.stringify([...notified].slice(-200)));
+    }
+}
+
+function initDashboardAndNotifications() {
+    renderDashboard();
+    updateNotificationButton();
+    document.getElementById('enableNotificationsBtn')?.addEventListener('click', requestNotificationPermission);
+    document.querySelectorAll('[data-dashboard-tab]').forEach(button => {
+        button.addEventListener('click', () => {
+            document.querySelector(`.tab-btn[data-tab="${button.dataset.dashboardTab}"]`)?.click();
+        });
+    });
+    checkEventReminders();
+    setInterval(checkEventReminders, 60000);
+}
+
 
 // ============================================
 // 위젯 통합 범사
@@ -1672,6 +1938,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderMemberInfo();
     renderTodos();
     renderShopping();
+    initDashboardAndNotifications();
     initWeather();
     initHeaderWeather();
     setupInfoModal('scheduleDetailModal');

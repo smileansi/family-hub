@@ -69,7 +69,8 @@
     <!-- 탭 네비게이션 -->
     <nav class="tab-nav">
         <div class="nav-section-label">가족 생활</div>
-        <button class="tab-btn active" data-tab="calendar"><span class="tab-icon"><i class="fa-regular fa-calendar"></i></span><span>일정</span></button>
+        <button class="tab-btn active" data-tab="dashboard"><span class="tab-icon"><i class="fas fa-chart-pie"></i></span><span>대시보드</span></button>
+        <button class="tab-btn" data-tab="calendar"><span class="tab-icon"><i class="fa-regular fa-calendar"></i></span><span>일정</span></button>
         <button class="tab-btn" data-tab="bulletin"><span class="tab-icon"><i class="fa-regular fa-note-sticky"></i></span><span>메모</span></button>
         <button class="tab-btn" data-tab="schedule"><span class="tab-icon"><i class="fas fa-table-cells-large"></i></span><span>시간표</span></button>
         <button class="tab-btn" data-tab="todos"><span class="tab-icon"><i class="fas fa-circle-check"></i></span><span>할 일</span></button>
@@ -98,7 +99,56 @@
                 <div class="visual-bubble"><i class="fas fa-heart"></i></div>
             </div>
         </div>
-        <section id="calendar" class="tab-content active">
+        <section id="dashboard" class="tab-content active">
+            <div class="dashboard-head">
+                <div>
+                    <span class="section-kicker">TODAY OVERVIEW</span>
+                    <h2>오늘의 가족 브리핑</h2>
+                    <p id="dashboardDateText">오늘 필요한 내용을 한곳에 모았어요.</p>
+                </div>
+                <button type="button" class="btn btn-secondary" id="enableNotificationsBtn">
+                    <i class="fa-regular fa-bell"></i> 알림 켜기
+                </button>
+            </div>
+            <div class="dashboard-stats">
+                <article class="dashboard-stat">
+                    <span class="dashboard-stat-icon is-green"><i class="fa-regular fa-calendar-check"></i></span>
+                    <div><strong id="dashboardEventCount">0</strong><span>오늘 일정</span></div>
+                </article>
+                <article class="dashboard-stat">
+                    <span class="dashboard-stat-icon is-blue"><i class="fas fa-table-cells-large"></i></span>
+                    <div><strong id="dashboardScheduleCount">0</strong><span>오늘 시간표</span></div>
+                </article>
+                <article class="dashboard-stat">
+                    <span class="dashboard-stat-icon is-orange"><i class="fas fa-circle-check"></i></span>
+                    <div><strong id="dashboardTodoCount">0</strong><span>남은 할 일</span></div>
+                </article>
+                <article class="dashboard-stat">
+                    <span class="dashboard-stat-icon is-red"><i class="fas fa-basket-shopping"></i></span>
+                    <div><strong id="dashboardShoppingCount">0</strong><span>살 물건</span></div>
+                </article>
+            </div>
+            <div class="dashboard-grid">
+                <article class="dashboard-panel dashboard-panel-wide">
+                    <div class="dashboard-panel-head"><div><span>TODAY</span><h3>오늘 일정</h3></div><button type="button" data-dashboard-tab="calendar">전체 보기</button></div>
+                    <div id="dashboardEvents" class="dashboard-list"></div>
+                </article>
+                <article class="dashboard-panel">
+                    <div class="dashboard-panel-head"><div><span>TIMETABLE</span><h3>오늘 시간표</h3></div><button type="button" data-dashboard-tab="schedule">전체 보기</button></div>
+                    <div id="dashboardSchedules" class="dashboard-list"></div>
+                </article>
+                <article class="dashboard-panel">
+                    <div class="dashboard-panel-head"><div><span>TO DO</span><h3>마감할 일</h3></div><button type="button" data-dashboard-tab="todos">전체 보기</button></div>
+                    <div id="dashboardTodos" class="dashboard-list"></div>
+                </article>
+                <article class="dashboard-panel">
+                    <div class="dashboard-panel-head"><div><span>SHOPPING</span><h3>장보기</h3></div><button type="button" data-dashboard-tab="shopping">전체 보기</button></div>
+                    <div id="dashboardShopping" class="dashboard-list"></div>
+                </article>
+            </div>
+        </section>
+
+        <section id="calendar" class="tab-content">
             <div class="tab-header">
                 <div><span class="section-kicker">CALENDAR</span><h2>가족 일정</h2><p>가족 모두의 약속과 중요한 날을 확인하세요.</p></div>
                 <button class="btn btn-primary" id="addEventBtn"><i class="fas fa-plus"></i> 일정 추가</button>
@@ -193,6 +243,33 @@
                             <span>누구의 일정인가요?</span>
                             <select id="eventFamily">
                                 <option value="전체" selected>가족 전체</option>
+                            </select>
+                        </label>
+                        <div class="event-form-row">
+                            <label class="event-field">
+                                <span>반복</span>
+                                <select id="eventRecurrence">
+                                    <option value="none">반복 안 함</option>
+                                    <option value="daily">매일</option>
+                                    <option value="weekly">매주</option>
+                                    <option value="monthly">매월</option>
+                                    <option value="yearly">매년</option>
+                                </select>
+                            </label>
+                            <label class="event-field">
+                                <span>반복 종료일 <small>(선택)</small></span>
+                                <input type="date" id="eventRecurrenceEnd">
+                            </label>
+                        </div>
+                        <label class="event-field">
+                            <span>알림</span>
+                            <select id="eventReminder">
+                                <option value="none">알림 없음</option>
+                                <option value="0">일정 시간에</option>
+                                <option value="10">10분 전</option>
+                                <option value="30">30분 전</option>
+                                <option value="60">1시간 전</option>
+                                <option value="1440">하루 전</option>
                             </select>
                         </label>
                         <label class="event-field">
