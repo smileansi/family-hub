@@ -1031,17 +1031,31 @@ function formatCompactDate(value) {
     return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
 }
 
+let memoSearchQuery = '';
+
 function renderBulletins() {
     const bulletinList = document.getElementById('bulletinList');
     bulletinList.innerHTML = '';
-    document.getElementById('memoSummaryCount').textContent = `${appState.bulletins.length}개의 메모`;
+    const normalizedQuery = memoSearchQuery.trim().toLocaleLowerCase('ko-KR');
+    const filteredBulletins = normalizedQuery
+        ? appState.bulletins.filter(bulletin =>
+            `${bulletin.title || ''} ${bulletin.content || ''}`
+                .toLocaleLowerCase('ko-KR')
+                .includes(normalizedQuery)
+        )
+        : appState.bulletins;
+    document.getElementById('memoSummaryCount').textContent = normalizedQuery
+        ? `${filteredBulletins.length}개의 검색 결과`
+        : `${appState.bulletins.length}개의 메모`;
 
-    if (appState.bulletins.length === 0) {
-        bulletinList.innerHTML = '<div class="empty-state" style="grid-column: 1/-1;">작성된 메모가 없습니다.</div>';
+    if (filteredBulletins.length === 0) {
+        bulletinList.innerHTML = normalizedQuery
+            ? '<div class="empty-state memo-search-empty"><i class="fas fa-magnifying-glass"></i><strong>검색 결과가 없어요</strong><span>다른 검색어로 다시 찾아보세요.</span></div>'
+            : '<div class="empty-state" style="grid-column: 1/-1;">작성된 메모가 없습니다.</div>';
         return;
     }
 
-    appState.bulletins.forEach((bulletin, index) => {
+    filteredBulletins.forEach((bulletin, index) => {
         const bulletinDiv = document.createElement('div');
         bulletinDiv.className = 'bulletin-item';
         const preview = (bulletin.content || '')
@@ -2035,6 +2049,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     initWeather();
     initHeaderWeather();
     setupInfoModal('scheduleDetailModal');
+
+    const memoSearchInput = document.getElementById('memoSearchInput');
+    const memoSearchClear = document.getElementById('memoSearchClear');
+    memoSearchInput?.addEventListener('input', event => {
+        memoSearchQuery = event.target.value;
+        memoSearchClear?.classList.toggle('is-visible', Boolean(memoSearchQuery));
+        renderBulletins();
+    });
+    memoSearchClear?.addEventListener('click', () => {
+        memoSearchQuery = '';
+        memoSearchInput.value = '';
+        memoSearchClear.classList.remove('is-visible');
+        renderBulletins();
+        memoSearchInput.focus();
+    });
 
     document.getElementById('addScheduleMemberBtn').addEventListener('click', addScheduleMember);
 

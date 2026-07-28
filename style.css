@@ -4570,6 +4570,90 @@ form input::placeholder, form textarea::placeholder { color: #a0aaa3; }
     box-shadow: none;
 }
 
+.memo-search {
+    position: relative;
+    max-width: 520px;
+    margin: 0 0 1rem;
+}
+
+.memo-search > i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    z-index: 1;
+    color: #8d9a91;
+    font-size: .72rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.memo-search input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 46px 0 42px;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 8px 22px rgba(35,57,44,.05);
+    font-size: .7rem;
+}
+
+.memo-search input:focus {
+    border-color: #abc4b2 !important;
+    box-shadow: 0 0 0 4px rgba(35,91,67,.08);
+}
+
+#memoSearchClear {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    color: #7b8980;
+    border: 0;
+    border-radius: 10px;
+    background: #f0f4ef;
+    cursor: pointer;
+    transform: translateY(-50%) scale(.85);
+    pointer-events: none;
+    transition: opacity .15s ease, transform .15s ease;
+}
+
+#memoSearchClear.is-visible {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    pointer-events: auto;
+}
+
+.memo-search-empty {
+    grid-column: 1 / -1;
+    min-height: 210px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+}
+
+.memo-search-empty i {
+    color: #9daf9f;
+    font-size: 1.4rem;
+}
+
+.memo-search-empty strong {
+    color: var(--ink);
+    font-size: .78rem;
+}
+
+.memo-search-empty span {
+    color: var(--muted);
+    font-size: .6rem;
+}
+
 /* Mobile collision fixes for embedded browsers. */
 @media (max-width: 768px) {
     .header-weather-widget {
@@ -4578,6 +4662,11 @@ form input::placeholder, form textarea::placeholder { color: #a0aaa3; }
 
     .header-weather-copy {
         display: none;
+    }
+
+    .memo-search {
+        max-width: none;
+        width: 100%;
     }
 
     #bulletin .tab-header,
