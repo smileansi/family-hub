@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#235b43">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>패밀리 허브</title>
+    <link rel="manifest" href="manifest.webmanifest">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=__ASSET_VERSION__">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -106,9 +110,12 @@
                     <h2>오늘의 가족 브리핑</h2>
                     <p id="dashboardDateText">오늘 필요한 내용을 한곳에 모았어요.</p>
                 </div>
-                <button type="button" class="btn btn-secondary" id="enableNotificationsBtn">
-                    <i class="fa-regular fa-bell"></i> 알림 켜기
-                </button>
+                <div class="notification-control">
+                    <button type="button" class="btn btn-secondary" id="enableNotificationsBtn">
+                        <i class="fa-regular fa-bell"></i> 알림 켜기
+                    </button>
+                    <small id="notificationStatus" aria-live="polite"></small>
+                </div>
             </div>
             <div class="dashboard-stats">
                 <article class="dashboard-stat">

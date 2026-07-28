@@ -1846,25 +1846,120 @@ function showReminderToast(event) {
     }, 5000);
 }
 
+function setNotificationStatus(message, isError = false) {
+    const status = document.getElementById('notificationStatus');
+    if (!status) return;
+    status.textContent = message;
+    status.classList.toggle('is-error', isError);
+}
+
+function isIosDevice() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+function isStandaloneApp() {
+    return window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+}
+
 function updateNotificationButton() {
     const button = document.getElementById('enableNotificationsBtn');
     if (!button) return;
-    if (typeof Notification === 'undefined') {
-        button.disabled = true;
-        button.innerHTML = '<i class="fa-regular fa-bell-slash"></i> 알림 미지원';
+    button.disabled = false;
+
+    if (!window.isSecureContext) {
+        button.innerHTML = '<i class="fa-solid fa-lock"></i> HTTPS 필요';
+        setNotificationStatus('알림은 HTTPS 주소에서만 사용할 수 있어요.', true);
         return;
     }
+
+    if (typeof Notification === 'undefined') {
+        button.innerHTML = isIosDevice()
+            ? '<i class="fa-solid fa-mobile-screen"></i> 설치 안내'
+            : '<i class="fa-regular fa-bell-slash"></i> 알림 미지원';
+        setNotificationStatus(
+            isIosDevice() && !isStandaloneApp()
+                ? 'iPhone에서는 공유 → 홈 화면에 추가한 뒤 앱 아이콘으로 실행하세요.'
+                : '이 브라우저에서는 알림을 지원하지 않아요.',
+            true
+        );
+        return;
+    }
+
     const enabled = Notification.permission === 'granted';
     button.classList.toggle('is-enabled', enabled);
     button.innerHTML = enabled
         ? '<i class="fas fa-bell"></i> 알림 사용 중'
         : '<i class="fa-regular fa-bell"></i> 알림 켜기';
+    if (Notification.permission === 'denied') {
+        setNotificationStatus('브라우저 설정에서 Family Hub 알림 권한을 허용해주세요.', true);
+    } else if (enabled) {
+        setNotificationStatus('일정 알림이 켜져 있어요.');
+    } else {
+        setNotificationStatus('버튼을 눌러 일정 알림을 허용하세요.');
+    }
 }
 
 async function requestNotificationPermission() {
-    if (typeof Notification === 'undefined') return;
-    await Notification.requestPermission();
+    if (!window.isSecureContext) {
+        setNotificationStatus('현재 HTTP 접속입니다. HTTPS로 접속해야 알림을 켤 수 있어요.', true);
+        return;
+    }
+    if (typeof Notification === 'undefined') {
+        setNotificationStatus(
+            isIosDevice() && !isStandaloneApp()
+                ? 'Safari의 공유 버튼에서 “홈 화면에 추가”한 후, 생성된 Family Hub 아이콘으로 실행해주세요.'
+                : '현재 모바일 브라우저는 웹 알림을 지원하지 않아요.',
+            true
+        );
+        return;
+    }
+    if (Notification.permission === 'denied') {
+        setNotificationStatus('알림이 차단되어 있습니다. 휴대폰의 사이트 설정에서 권한을 변경해주세요.', true);
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        setNotificationStatus(
+            permission === 'granted'
+                ? '알림을 허용했습니다. 일정 시간이 되면 알려드릴게요.'
+                : '알림 권한이 허용되지 않았어요.',
+            permission !== 'granted'
+        );
+    } catch (error) {
+        console.error('Notification permission error:', error);
+        setNotificationStatus('알림 권한을 요청할 수 없습니다. HTTPS와 브라우저 설정을 확인해주세요.', true);
+    }
     updateNotificationButton();
+}
+
+async function registerNotificationServiceWorker() {
+    if (!('serviceWorker' in navigator) || !window.isSecureContext) return null;
+    try {
+        return await navigator.serviceWorker.register('./sw.js');
+    } catch (error) {
+        console.error('Service worker registration error:', error);
+        setNotificationStatus('모바일 알림 서비스를 시작하지 못했습니다.', true);
+        return null;
+    }
+}
+
+function showSystemNotification(event) {
+    const options = {
+        body: event.allDay ? '오늘 예정된 일정입니다.' : `${event.startTime} 일정이 곧 시작됩니다.`,
+        tag: `family-hub-${event.id}`,
+        renotify: true
+    };
+
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+            .then(registration => registration.showNotification(`Family Hub · ${event.title}`, options))
+            .catch(error => console.error('Persistent notification error:', error));
+        return;
+    }
+    new Notification(`Family Hub · ${event.title}`, options);
 }
 
 function checkEventReminders() {
@@ -1891,10 +1986,7 @@ function checkEventReminders() {
             if (elapsed >= 0 && elapsed < 300000 && !notified.has(key)) {
                 showReminderToast(event);
                 if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-                    new Notification(`Family Hub · ${event.title}`, {
-                        body: event.allDay ? '오늘 예정된 일정입니다.' : `${event.startTime} 일정이 곧 시작됩니다.`,
-                        icon: '/favicon.ico'
-                    });
+                    showSystemNotification(event);
                 }
                 notified.add(key);
                 changed = true;
@@ -1909,6 +2001,7 @@ function checkEventReminders() {
 
 function initDashboardAndNotifications() {
     renderDashboard();
+    registerNotificationServiceWorker();
     updateNotificationButton();
     document.getElementById('enableNotificationsBtn')?.addEventListener('click', requestNotificationPermission);
     document.querySelectorAll('[data-dashboard-tab]').forEach(button => {

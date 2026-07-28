@@ -1386,6 +1386,24 @@ form button[type="submit"] {
     background: var(--green);
 }
 
+.notification-control {
+    max-width: 300px;
+    display: grid;
+    justify-items: end;
+    gap: 7px;
+}
+
+.notification-control small {
+    color: var(--muted);
+    font-size: 9px;
+    line-height: 1.45;
+    text-align: right;
+}
+
+.notification-control small.is-error {
+    color: #ae5b55;
+}
+
 .dashboard-stats {
     margin-bottom: 18px;
     display: grid;
@@ -1594,7 +1612,9 @@ form button[type="submit"] {
 
 @media (max-width: 600px) {
     .dashboard-head {
-        align-items: flex-start;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
     }
 
     .dashboard-head p {
@@ -1602,14 +1622,25 @@ form button[type="submit"] {
     }
 
     #enableNotificationsBtn {
-        flex: 0 0 auto;
+        width: 100%;
         padding-inline: 12px;
-        font-size: 0;
+        font-size: 10px;
     }
 
     #enableNotificationsBtn i {
-        margin: 0;
+        margin-right: 5px;
         font-size: 14px;
+    }
+
+    .notification-control {
+        width: 100%;
+        max-width: none;
+        justify-items: stretch;
+    }
+
+    .notification-control small {
+        font-size: 9px;
+        text-align: left;
     }
 
     .dashboard-stats {
