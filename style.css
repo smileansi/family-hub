@@ -1359,6 +1359,21 @@ form button[type="submit"] {
     }
 }
 
+/* Modals are portaled to body so the backdrop always covers the viewport. */
+body > .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    width: 100dvw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+}
+
+body > .modal.show {
+    display: flex;
+}
+
 /* Keep the redesigned weather dashboard above legacy weather styles. */
 #weather .weather-container {
     padding: 0;
@@ -4227,4 +4242,76 @@ form input::placeholder, form textarea::placeholder { color: #a0aaa3; }
     border-radius: 0;
     background: transparent;
     box-shadow: none;
+}
+
+/* Mobile collision fixes for embedded browsers. */
+@media (max-width: 768px) {
+    .header-weather-widget {
+        overflow: hidden;
+    }
+
+    .header-weather-copy {
+        display: none;
+    }
+
+    #bulletin .tab-header,
+    #todos .tab-header,
+    #shopping .tab-header {
+        width: 100%;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        text-align: left;
+    }
+
+    #bulletin .tab-header > div,
+    #todos .tab-header > div,
+    #shopping .tab-header > div {
+        min-width: 0;
+    }
+
+    #bulletin .tab-header > .btn,
+    #todos .tab-header > .btn,
+    #shopping .tab-header > .btn {
+        position: static;
+        inset: auto;
+        z-index: auto;
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        min-height: 44px;
+        margin-left: auto;
+        padding: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        font-size: 0;
+        box-shadow: 0 8px 18px rgba(35,91,67,.16);
+        transform: none;
+    }
+
+    #bulletin .tab-header > .btn i,
+    #todos .tab-header > .btn i,
+    #shopping .tab-header > .btn i {
+        margin: 0;
+        font-size: 14px;
+    }
+
+    #todos .filter-buttons {
+        position: relative;
+        z-index: 1;
+    }
+
+    #shopping .shopping-container {
+        overflow: visible;
+    }
+
+    #shopping .shopping-stats {
+        position: static;
+        inset: auto;
+        z-index: auto;
+        box-shadow: none;
+    }
 }

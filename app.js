@@ -223,6 +223,14 @@ function initSwipe() {
 // ============================================
 // 모달 관리
 // ============================================
+function portalModalsToBody() {
+    document.querySelectorAll('.modal').forEach(modal => {
+        if (modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+    });
+}
+
 function setupModals() {
     setupEventModals();
 
@@ -1652,6 +1660,7 @@ function updateShoppingTotal() {
 // ============================================
 document.addEventListener('DOMContentLoaded', async () => {
     // 초기화
+    portalModalsToBody();
     await loadLocalData();
     initTabs();
     initSwipe();
