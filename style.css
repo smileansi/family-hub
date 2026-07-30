@@ -1002,8 +1002,18 @@ form button[type="submit"] {
 .energy-gauge-fill{width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#22c55e,#f59e0b,#e11d48);transition:width .35s}
 .energy-gauge-label{display:block;margin-top:10px;font:800 22px Manrope,sans-serif}.energy-latest{margin:16px 0 0;font-size:13px}
 .energy-error{padding:14px;border-radius:12px;background:#ffe4e6;color:#be123c}
+.dashboard-energy-panel{background:linear-gradient(145deg,#f7fbf9,#fff)}
+.dashboard-energy-content{display:grid;grid-template-columns:minmax(320px,.9fr) minmax(280px,1.1fr);gap:24px;align-items:stretch}
+.dashboard-energy-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.dashboard-energy-metrics>div{display:flex;flex-direction:column;justify-content:center;min-height:86px;padding:14px 16px;border:1px solid rgba(31,107,79,.12);border-radius:16px;background:rgba(255,255,255,.82)}
+.dashboard-energy-metrics span{color:var(--text-color);font-size:12px;font-weight:700}
+.dashboard-energy-metrics strong{margin-top:6px;color:#1f6b4f;font:800 20px Manrope,sans-serif}
+.dashboard-energy-chart{height:150px;display:grid;grid-template-columns:repeat(24,minmax(3px,1fr));align-items:end;gap:4px;padding:10px 4px 0;border-bottom:1px solid var(--border-color)}
+.dashboard-energy-chart span{display:block;min-height:4px;border-radius:5px 5px 1px 1px;background:linear-gradient(180deg,#57ad87,#1f6b4f)}
+.dashboard-energy-updated{margin:10px 0 0;color:var(--text-color);font-size:12px;text-align:right}
 @media(max-width:1000px){.energy-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:600px){.energy-header,.energy-actions{align-items:stretch;flex-direction:column}.energy-summary-grid,.energy-detail-grid{grid-template-columns:1fr}.energy-chart{gap:2px;overflow-x:auto}}
+@media(max-width:800px){.dashboard-energy-content{grid-template-columns:1fr}}
+@media(max-width:600px){.energy-header,.energy-actions{align-items:stretch;flex-direction:column}.energy-summary-grid,.energy-detail-grid{grid-template-columns:1fr}.energy-chart{gap:2px;overflow-x:auto}.dashboard-energy-metrics{grid-template-columns:1fr 1fr}.dashboard-energy-chart{height:120px;gap:2px}}
 
 /* ============================================
    Weather dashboard

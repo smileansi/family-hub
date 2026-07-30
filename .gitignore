@@ -4,6 +4,8 @@
 
 # 의존성
 node_modules/
+venv/
+backups/
 
 # 빌드
 dist/

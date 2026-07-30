@@ -1847,6 +1847,46 @@ function renderDashboard() {
             meta: item.category || '기타'
         })))
         : dashboardEmpty('장보기 목록을 모두 완료했어요');
+    loadDashboardEnergy();
+}
+
+let dashboardEnergyLoadedAt = 0;
+let dashboardEnergyLoading = false;
+
+async function loadDashboardEnergy(force = false) {
+    const container = document.getElementById('dashboardEnergyChart');
+    if (!container || dashboardEnergyLoading) return;
+    if (!force && Date.now() - dashboardEnergyLoadedAt < 60000) return;
+    dashboardEnergyLoading = true;
+    try {
+        const today = energyLocalDate(new Date());
+        const response = await fetch(`${API_BASE_URL}/api/energy/dashboard?date=${today}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '에너지 정보를 불러오지 못했습니다.');
+
+        document.getElementById('dashboardEnergyDay').textContent = `${energyNumber(data.day_kwh, 2)} kWh`;
+        document.getElementById('dashboardEnergyMonth').textContent = `${energyNumber(data.month_kwh)} kWh`;
+        document.getElementById('dashboardEnergyBill').textContent = energyWon(data.bill.total);
+        document.getElementById('dashboardEnergyBenchmark').textContent = `${energyNumber(data.benchmark.percent)}%`;
+
+        const values = data.hourly.electricity || [];
+        const max = Math.max(...values.map(value => Number(value || 0)), 0.01);
+        container.innerHTML = values.map((value, hour) => {
+            const amount = Number(value || 0);
+            const height = Math.max(5, amount / max * 100);
+            return `<span style="height:${height}%" title="${String(hour).padStart(2, '0')}:00 · ${energyNumber(amount, 3)} kWh"></span>`;
+        }).join('');
+        const latest = data.latest?.measured_at
+            ? new Date(data.latest.measured_at).toLocaleString('ko-KR')
+            : '수집 기록 없음';
+        document.getElementById('dashboardEnergyUpdated').textContent =
+            `${data.mode === 'demo' ? '데모 데이터' : '코콤 실시간 데이터'} · 최근 수집 ${latest}`;
+        dashboardEnergyLoadedAt = Date.now();
+    } catch (error) {
+        document.getElementById('dashboardEnergyUpdated').textContent = error.message;
+    } finally {
+        dashboardEnergyLoading = false;
+    }
 }
 
 function showReminderToast(event) {

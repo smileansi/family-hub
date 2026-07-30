@@ -3,12 +3,18 @@ Description=Family Hub Gunicorn Server
 After=network.target
 
 [Service]
-User=smileansi
-Group=smileansi
-WorkingDirectory=/home/smileansi/family-hub/family-hub
-Environment="PATH=/home/smileansi/family-hub/family-hub/venv/bin"
-ExecStart=/home/smileansi/family-hub/family-hub/venv/bin/gunicorn --workers 3 --bind unix:family-hub.sock -m 007 server:app
-Restart=always
+User=__APP_USER__
+Group=__APP_GROUP__
+WorkingDirectory=__APP_DIR__
+Environment="PATH=__APP_DIR__/venv/bin"
+EnvironmentFile=-__APP_DIR__/.env
+ExecStart=__APP_DIR__/venv/bin/gunicorn --workers 3 --bind unix:__APP_DIR__/family-hub.sock --umask 007 --timeout 60 server:app
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+KillSignal=SIGTERM
+PrivateTmp=true
+NoNewPrivileges=true
 
 [Install]
 WantedBy=multi-user.target
