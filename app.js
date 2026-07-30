@@ -2277,8 +2277,16 @@ async function syncEnergyNow() {
     setEnergyStatus('syncing', '동기화 중');
     try {
         const response = await fetch(`${API_BASE_URL}/api/energy/sync`, { method: 'POST' });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.message || '동기화에 실패했습니다.');
+        const contentType = response.headers.get('content-type') || '';
+        const result = contentType.includes('application/json')
+            ? await response.json()
+            : {
+                ok: false,
+                message: `서버가 JSON 대신 오류 페이지를 반환했습니다. (HTTP ${response.status})`
+            };
+        if (!response.ok || !result.ok) {
+            throw new Error(result.message || `동기화에 실패했습니다. (HTTP ${response.status})`);
+        }
         await loadEnergyDashboard();
     } catch (error) {
         errorBox.textContent = error.message;

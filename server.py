@@ -75,7 +75,10 @@ def get_energy_status():
 def sync_energy():
     ensure_collector()
     result = sync_energy_now(force=True)
-    return jsonify(result), 200 if result['ok'] else 502
+    # 코콤 동기화 실패는 프록시 장애가 아니라 애플리케이션 수준의 결과다.
+    # Cloudflare/Nginx가 502 응답 본문을 HTML 오류 페이지로 바꾸지 않도록
+    # JSON 응답 자체는 200으로 전달하고, 성공 여부는 ok 필드로 구분한다.
+    return jsonify(result)
 
 @app.route('/<path:filename>')
 def static_files(filename):
