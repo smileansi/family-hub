@@ -32,3 +32,6 @@ family_hub.db-shm
 family_hub.db-wal
 __pycache__/
 *.pyc
+
+# Kocom energy readings
+data/

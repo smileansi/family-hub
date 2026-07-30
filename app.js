@@ -6,9 +6,7 @@
 // 로컬: http://127.0.0.1:5000, 원격: 현재 접속 프로토콜 그대로 사용 (http/https 자동 일치)
 const API_BASE_URL = window.location.protocol === 'file:'
     ? 'http://127.0.0.1:5000'
-    : window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? `http://${window.location.hostname}:5000`
-    : `${window.location.protocol}//${window.location.hostname}`;
+    : window.location.origin;
 
 const appState = {
     user: null,
@@ -172,6 +170,9 @@ function initTabs() {
                         break;
                     case 'weather':
                         initWeather();
+                        break;
+                    case 'energy':
+                        initEnergyTab();
                         break;
                 }
             } catch (error) {
@@ -2085,6 +2086,168 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     weatherLocateBtn?.addEventListener('click', requestCurrentPositionWeather);
 });
+
+// ============================================
+// 에너지 대시보드
+// ============================================
+let energyTabInitialized = false;
+
+function energyLocalDate(date) {
+    return [
+        date.getFullYear(),
+        String(date.getMonth() + 1).padStart(2, '0'),
+        String(date.getDate()).padStart(2, '0')
+    ].join('-');
+}
+
+function energyNumber(value, digits = 1) {
+    return Number(value || 0).toLocaleString('ko-KR', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+    });
+}
+
+function energyWon(value) {
+    return `${Math.round(Number(value || 0)).toLocaleString('ko-KR')}원`;
+}
+
+function initEnergyTab() {
+    const picker = document.getElementById('energyDatePicker');
+    if (!picker) return;
+    if (!energyTabInitialized) {
+        picker.value = energyLocalDate(new Date());
+        picker.max = picker.value;
+        picker.addEventListener('change', loadEnergyDashboard);
+        document.getElementById('energyHistorySelect').addEventListener('change', event => {
+            if (!event.target.value) return;
+            picker.value = event.target.value;
+            loadEnergyDashboard();
+        });
+        document.getElementById('energyPrevDate').addEventListener('click', () => changeEnergyDate(-1));
+        document.getElementById('energyNextDate').addEventListener('click', () => changeEnergyDate(1));
+        document.getElementById('energySyncButton').addEventListener('click', syncEnergyNow);
+        energyTabInitialized = true;
+    }
+    loadEnergyDashboard();
+}
+
+function changeEnergyDate(offset) {
+    const picker = document.getElementById('energyDatePicker');
+    const selected = new Date(`${picker.value}T12:00:00`);
+    selected.setDate(selected.getDate() + offset);
+    picker.value = [energyLocalDate(selected), energyLocalDate(new Date())].sort()[0];
+    loadEnergyDashboard();
+}
+
+async function loadEnergyDashboard() {
+    const picker = document.getElementById('energyDatePicker');
+    const errorBox = document.getElementById('energyError');
+    if (!picker?.value) return;
+    errorBox.classList.add('hidden');
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/energy/dashboard?date=${encodeURIComponent(picker.value)}`);
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '에너지 정보를 불러오지 못했습니다.');
+        renderEnergyDashboard(data);
+    } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.classList.remove('hidden');
+        setEnergyStatus('error', '연결 오류');
+    }
+}
+
+function renderEnergyDashboard(data) {
+    renderEnergyHistory(data.available_dates || [], data.date);
+    document.getElementById('energyDayUsage').textContent = `${energyNumber(data.day_kwh, 2)} kWh`;
+    document.getElementById('energyMonthUsage').textContent = `${energyNumber(data.month_kwh)} kWh`;
+    document.getElementById('energyExpectedBill').textContent = energyWon(data.bill.total);
+    const difference = Number(data.benchmark.difference_kwh || 0);
+    document.getElementById('energyBenchmarkDiff').textContent = `${difference > 0 ? '+' : ''}${energyNumber(difference)} kWh`;
+    document.getElementById('energyBenchmarkText').textContent = `월 ${energyNumber(data.benchmark.kwh, 0)} kWh 기준`;
+    document.getElementById('energyBenchmarkBill').textContent = `기준 사용량 예상 요금은 ${energyWon(data.benchmark.bill)}입니다.`;
+    const percent = Math.max(0, Number(data.benchmark.percent || 0));
+    document.getElementById('energyGaugeFill').style.width = `${Math.min(percent, 100)}%`;
+    document.getElementById('energyGaugeLabel').textContent = `기준의 ${energyNumber(percent)}%`;
+    const latest = data.latest?.measured_at ? new Date(data.latest.measured_at).toLocaleString('ko-KR') : '수집 기록 없음';
+    document.getElementById('energyLatestReading').textContent = `최근 수집: ${latest}`;
+    setEnergyStatus(data.status?.state, data.mode === 'demo' ? '데모 데이터' : (data.status?.message || '코콤 연결'));
+    renderEnergyChart(data.hours, data.hourly.electricity || []);
+    renderEnergyBill(data.bill);
+}
+
+function renderEnergyHistory(dates, selectedDate) {
+    const select = document.getElementById('energyHistorySelect');
+    select.innerHTML = '<option value="">저장된 날짜</option>';
+    dates.forEach(date => {
+        const option = document.createElement('option');
+        option.value = date;
+        option.textContent = new Date(`${date}T12:00:00`).toLocaleDateString('ko-KR', {
+            year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+        });
+        option.selected = date === selectedDate;
+        select.appendChild(option);
+    });
+}
+
+function renderEnergyChart(hours, values) {
+    const chart = document.getElementById('energyChart');
+    const tooltip = document.getElementById('energyChartTooltip');
+    const max = Math.max(...values.map(value => Number(value || 0)), 0.01);
+    chart.innerHTML = '';
+    hours.forEach((hour, index) => {
+        const value = Number(values[index] || 0);
+        const column = document.createElement('div');
+        column.className = 'energy-chart-column';
+        const bar = document.createElement('button');
+        bar.type = 'button';
+        bar.className = 'energy-chart-bar';
+        bar.style.height = `${Math.max(2, value / max * 100)}%`;
+        bar.setAttribute('aria-label', `${hour} ${energyNumber(value, 3)} kWh`);
+        bar.addEventListener('click', () => { tooltip.textContent = `${hour} · ${energyNumber(value, 3)} kWh`; });
+        const label = document.createElement('span');
+        label.className = 'energy-chart-hour';
+        label.textContent = index % 3 === 0 ? hour.slice(0, 2) : '';
+        column.append(bar, label);
+        chart.appendChild(column);
+    });
+}
+
+function renderEnergyBill(bill) {
+    const rows = [
+        ['기본요금', bill.basic], ['전력량요금', bill.energy_charge],
+        ['기후환경요금', bill.climate], ['연료비조정액', bill.fuel],
+        ['부가가치세', bill.vat], ['전력산업기반기금', bill.fund], ['예상 합계', bill.total]
+    ];
+    document.getElementById('energyBillBreakdown').innerHTML = rows.map(([label, value], index) => {
+        const className = index === rows.length - 1 ? ' class="energy-bill-total"' : '';
+        return `<dt${className}>${label}</dt><dd${className}>${energyWon(value)}</dd>`;
+    }).join('');
+}
+
+function setEnergyStatus(state, message) {
+    const element = document.getElementById('energyStatus');
+    element.className = `energy-status${state === 'error' ? ' is-error' : ''}${['connected', 'demo'].includes(state) ? ' is-live' : ''}`;
+    element.textContent = message || '준비됨';
+}
+
+async function syncEnergyNow() {
+    const button = document.getElementById('energySyncButton');
+    const errorBox = document.getElementById('energyError');
+    button.disabled = true;
+    setEnergyStatus('syncing', '동기화 중');
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/energy/sync`, { method: 'POST' });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || '동기화에 실패했습니다.');
+        await loadEnergyDashboard();
+    } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.classList.remove('hidden');
+        setEnergyStatus('error', '동기화 실패');
+    } finally {
+        button.disabled = false;
+    }
+}
 
 // ============================================
 // 날씨 기능

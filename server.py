@@ -2,8 +2,15 @@ import os
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from datetime import datetime
+from datetime import date, datetime
 from database import init_db, load_data, save_data
+from energy_service import (
+    dashboard as build_energy_dashboard,
+    ensure_collector,
+    is_demo,
+    status as energy_status,
+    sync_now as sync_energy_now,
+)
 
 app = Flask(__name__)
 
@@ -11,6 +18,7 @@ app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*", "methods": ["GET", "POST", "DELETE", "PUT"], "allow_headers": ["Content-Type"]}})
 
 init_db()
+ensure_collector()
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
@@ -45,6 +53,30 @@ def delete_schedule(schedule_id):
     save_data(data)
     return jsonify({'success': True})
 
+@app.route('/api/energy/dashboard', methods=['GET'])
+def get_energy_dashboard():
+    ensure_collector()
+    try:
+        selected = date.fromisoformat(request.args.get('date', date.today().isoformat()))
+    except ValueError:
+        return jsonify({'error': '날짜 형식은 YYYY-MM-DD여야 합니다.'}), 400
+    try:
+        return jsonify(build_energy_dashboard(selected))
+    except Exception as exc:  # noqa: BLE001
+        app.logger.exception('Energy dashboard failed')
+        return jsonify({'error': str(exc)}), 500
+
+@app.route('/api/energy/status', methods=['GET'])
+def get_energy_status():
+    ensure_collector()
+    return jsonify({**energy_status, 'mode': 'demo' if is_demo() else 'kocom'})
+
+@app.route('/api/energy/sync', methods=['POST'])
+def sync_energy():
+    ensure_collector()
+    result = sync_energy_now(force=True)
+    return jsonify(result), 200 if result['ok'] else 502
+
 @app.route('/<path:filename>')
 def static_files(filename):
     return send_from_directory('.', filename)
@@ -73,4 +105,8 @@ def index():
     return response
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(
+        host=os.getenv('FAMILY_HUB_HOST', '0.0.0.0'),
+        port=int(os.getenv('FAMILY_HUB_PORT', '5000')),
+        debug=False
+    )

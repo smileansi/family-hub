@@ -84,6 +84,7 @@
         <button class="tab-btn" data-tab="todos"><span class="tab-icon"><i class="fas fa-circle-check"></i></span><span>할 일</span></button>
         <button class="tab-btn" data-tab="shopping"><span class="tab-icon"><i class="fas fa-basket-shopping"></i></span><span>쇼핑</span></button>
         <button class="tab-btn" data-tab="weather"><span class="tab-icon"><i class="fas fa-cloud-sun"></i></span><span>날씨</span></button>
+        <button class="tab-btn" data-tab="energy"><span class="tab-icon"><i class="fas fa-bolt"></i></span><span>에너지</span></button>
         <div class="nav-footer">
             <span class="storage-status"><i class="fas fa-database"></i> SQLite 연결</span>
             <small>가족의 기록을 안전하게 보관해요</small>
@@ -475,6 +476,61 @@
             <div id="weatherContainer" class="weather-container">
                 <div class="weather-loading">날씨 정보를 불러오는 중...</div>
             </div>
+        </section>
+
+        <section id="energy" class="tab-content">
+            <div class="tab-header energy-header">
+                <div>
+                    <span class="section-kicker">ENERGY</span>
+                    <h2>우리 집 에너지</h2>
+                    <p>날짜별 1시간 단위 사용량과 이번 달 예상 전기요금을 확인하세요.</p>
+                </div>
+                <div class="energy-actions">
+                    <span id="energyStatus" class="energy-status">연결 확인 중</span>
+                    <button id="energySyncButton" class="btn btn-primary" type="button">
+                        <i class="fas fa-rotate"></i> 지금 동기화
+                    </button>
+                </div>
+            </div>
+
+            <div class="energy-date-bar">
+                <button id="energyPrevDate" class="energy-date-button" type="button" aria-label="이전 날짜"><i class="fas fa-chevron-left"></i></button>
+                <input id="energyDatePicker" type="date" aria-label="조회 날짜">
+                <button id="energyNextDate" class="energy-date-button" type="button" aria-label="다음 날짜"><i class="fas fa-chevron-right"></i></button>
+                <select id="energyHistorySelect" aria-label="저장된 날짜 선택">
+                    <option value="">저장된 날짜</option>
+                </select>
+            </div>
+
+            <div class="energy-summary-grid">
+                <article class="energy-summary-card"><span>선택일 사용량</span><strong id="energyDayUsage">-- kWh</strong><small>1시간 사용량 합계</small></article>
+                <article class="energy-summary-card"><span>이번 달 누적</span><strong id="energyMonthUsage">-- kWh</strong><small>코콤 월 누적 기준</small></article>
+                <article class="energy-summary-card energy-bill-card"><span>예상 전기요금</span><strong id="energyExpectedBill">-- 원</strong><small>부가세·전력기금 포함 추정</small></article>
+                <article class="energy-summary-card"><span>4인 가족 기준 대비</span><strong id="energyBenchmarkDiff">-- kWh</strong><small id="energyBenchmarkText">월 350 kWh 기준</small></article>
+            </div>
+
+            <div class="energy-panel">
+                <div class="energy-panel-title">
+                    <div><h3>시간대별 전기 사용량</h3><p>막대를 눌러 해당 시간의 정확한 값을 확인하세요.</p></div>
+                    <span>kWh</span>
+                </div>
+                <div id="energyChart" class="energy-chart" role="img" aria-label="시간대별 전기 사용량 그래프"></div>
+                <div id="energyChartTooltip" class="energy-chart-tooltip" aria-live="polite">시간 막대를 선택하세요.</div>
+            </div>
+
+            <div class="energy-detail-grid">
+                <div class="energy-panel">
+                    <div class="energy-panel-title"><div><h3>예상 요금 상세</h3><p>현재 설정된 주택용 계약종별 기준입니다.</p></div></div>
+                    <dl id="energyBillBreakdown" class="energy-bill-breakdown"></dl>
+                </div>
+                <div class="energy-panel">
+                    <div class="energy-panel-title"><div><h3>4인 가족 비교</h3><p id="energyBenchmarkBill">기준 요금을 계산 중입니다.</p></div></div>
+                    <div class="energy-gauge"><div id="energyGaugeFill" class="energy-gauge-fill"></div></div>
+                    <strong id="energyGaugeLabel" class="energy-gauge-label">--%</strong>
+                    <p id="energyLatestReading" class="energy-latest">최근 수집 기록이 없습니다.</p>
+                </div>
+            </div>
+            <div id="energyError" class="energy-error hidden"></div>
         </section>
     </main>
 
