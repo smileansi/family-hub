@@ -125,6 +125,38 @@ class EnergyStore:
         # 코콤 월 조회 값은 해당 월의 누적 사용량이므로 최신값이 월 사용량이다.
         return round(max(0.0, float(rows[-1][0])), 3)
 
+    def daily_usage(self, selected: date, kind: str = "electricity") -> list[float | None]:
+        start = datetime(selected.year, selected.month, 1)
+        if selected.month == 12:
+            end = datetime(selected.year + 1, 1, 1)
+        else:
+            end = datetime(selected.year, selected.month + 1, 1)
+        previous = start - timedelta(days=2)
+        with self.connect() as db:
+            rows = db.execute(
+                """
+                SELECT measured_at, cumulative
+                FROM energy_readings
+                WHERE kind=? AND measured_at>=? AND measured_at<?
+                ORDER BY measured_at
+                """,
+                (kind, previous.isoformat(), end.isoformat()),
+            ).fetchall()
+
+        result: list[float | None] = [None] * ((end - start).days)
+        prior: float | None = None
+        for row in rows:
+            stamp = datetime.fromisoformat(row["measured_at"])
+            value = float(row["cumulative"])
+            if start <= stamp < end and prior is not None:
+                delta = value - prior
+                if delta < 0:
+                    delta = value
+                day_index = stamp.day - 1
+                result[day_index] = round((result[day_index] or 0.0) + max(0.0, delta), 4)
+            prior = value
+        return result
+
     def available_dates(self, kind: str = "electricity") -> list[str]:
         with self.connect() as db:
             rows = db.execute(

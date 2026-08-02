@@ -992,11 +992,29 @@ form button[type="submit"] {
 .energy-chart-column{position:relative;height:220px;display:flex;align-items:flex-end;justify-content:center}
 .energy-chart-bar{width:100%;min-height:3px;border:0;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#3b9470,#1f6b4f);cursor:pointer;transition:.15s}
 .energy-chart-bar:hover,.energy-chart-bar:focus{filter:brightness(1.1);transform:translateY(-2px);outline:none}
+.energy-chart-bar:disabled{background:#e2e8f0;cursor:default;filter:none;transform:none}
+.energy-chart-bar.is-selected{background:linear-gradient(180deg,#f6b94a,#d97706);box-shadow:0 0 0 3px rgba(217,119,6,.14)}
 .energy-chart-hour{position:absolute;bottom:-24px;color:#94a3b8;font-size:11px}
 .energy-chart-tooltip{text-align:center;color:var(--text-color);font-size:14px;margin-top:12px}
+.energy-month-chart{grid-template-columns:repeat(31,minmax(10px,1fr))}
+.energy-daily-details{padding:0;overflow:hidden}
+.energy-daily-details summary{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:18px 20px;cursor:pointer;list-style:none}
+.energy-daily-details summary::-webkit-details-marker{display:none}
+.energy-daily-details summary span{padding:5px 9px;border-radius:999px;background:#e8f3ed;color:#1f6b4f;font-size:12px;font-weight:800}
+.energy-daily-details summary strong{font-size:15px}
+.energy-daily-details summary i{color:#64748b;transition:transform .2s}
+.energy-daily-details[open] summary{border-bottom:1px solid var(--border-color)}
+.energy-daily-details[open] summary i{transform:rotate(180deg)}
+.energy-daily-details>.energy-panel-title,.energy-daily-details>.energy-chart,.energy-daily-details>.energy-chart-tooltip{margin-left:20px;margin-right:20px}
+.energy-daily-details>.energy-panel-title{margin-top:20px}
+.energy-daily-details>.energy-chart-tooltip{margin-bottom:20px}
 .energy-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.energy-bill-breakdown{display:grid;grid-template-columns:1fr auto;gap:12px;margin:0}
-.energy-bill-breakdown dt{color:var(--text-color)}.energy-bill-breakdown dd{margin:0;font-weight:800}
+.energy-bill-comparison{display:grid;gap:0}
+.energy-bill-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(90px,auto) minmax(90px,auto);gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid #eef2f0}
+.energy-bill-row span{color:var(--text-color)}
+.energy-bill-row strong{text-align:right;font-size:13px}
+.energy-bill-head{padding-top:0;color:#64748b;font-size:12px}
+.energy-bill-head strong{font-size:12px}
 .energy-bill-total{border-top:1px solid var(--border-color);padding-top:12px;color:#1f6b4f!important}
 .energy-gauge{height:14px;overflow:hidden;border-radius:999px;background:#e2e8f0}
 .energy-gauge-fill{width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#22c55e,#f59e0b,#e11d48);transition:width .35s}
@@ -1013,7 +1031,7 @@ form button[type="submit"] {
 .dashboard-energy-updated{margin:10px 0 0;color:var(--text-color);font-size:12px;text-align:right}
 @media(max-width:1000px){.energy-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:800px){.dashboard-energy-content{grid-template-columns:1fr}}
-@media(max-width:600px){.energy-header,.energy-actions{align-items:stretch;flex-direction:column}.energy-summary-grid,.energy-detail-grid{grid-template-columns:1fr}.energy-chart{gap:2px;overflow-x:auto}.dashboard-energy-metrics{grid-template-columns:1fr 1fr}.dashboard-energy-chart{height:120px;gap:2px}}
+@media(max-width:600px){.energy-header,.energy-actions{align-items:stretch;flex-direction:column}.energy-date-bar{flex-wrap:wrap}.energy-summary-grid,.energy-detail-grid{grid-template-columns:1fr}.energy-chart{gap:2px;overflow-x:auto}.energy-month-chart{min-width:620px}.energy-bill-row{grid-template-columns:minmax(82px,1fr) minmax(76px,auto) minmax(76px,auto);gap:7px}.dashboard-energy-metrics{grid-template-columns:1fr 1fr}.dashboard-energy-chart{height:120px;gap:2px}}
 
 /* ============================================
    Weather dashboard

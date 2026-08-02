@@ -2131,6 +2131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 에너지 대시보드
 // ============================================
 let energyTabInitialized = false;
+let energySelectedDate = null;
 
 function energyLocalDate(date) {
     return [
@@ -2138,6 +2139,10 @@ function energyLocalDate(date) {
         String(date.getMonth() + 1).padStart(2, '0'),
         String(date.getDate()).padStart(2, '0')
     ].join('-');
+}
+
+function energyLocalMonth(date) {
+    return energyLocalDate(date).slice(0, 7);
 }
 
 function energyNumber(value, digits = 1) {
@@ -2155,12 +2160,18 @@ function initEnergyTab() {
     const picker = document.getElementById('energyDatePicker');
     if (!picker) return;
     if (!energyTabInitialized) {
-        picker.value = energyLocalDate(new Date());
+        picker.value = energyLocalMonth(new Date());
         picker.max = picker.value;
-        picker.addEventListener('change', loadEnergyDashboard);
+        picker.addEventListener('change', () => {
+            energySelectedDate = null;
+            document.getElementById('energyDailyDetails').open = false;
+            loadEnergyDashboard();
+        });
         document.getElementById('energyHistorySelect').addEventListener('change', event => {
             if (!event.target.value) return;
             picker.value = event.target.value;
+            energySelectedDate = null;
+            document.getElementById('energyDailyDetails').open = false;
             loadEnergyDashboard();
         });
         document.getElementById('energyPrevDate').addEventListener('click', () => changeEnergyDate(-1));
@@ -2173,9 +2184,11 @@ function initEnergyTab() {
 
 function changeEnergyDate(offset) {
     const picker = document.getElementById('energyDatePicker');
-    const selected = new Date(`${picker.value}T12:00:00`);
-    selected.setDate(selected.getDate() + offset);
-    picker.value = [energyLocalDate(selected), energyLocalDate(new Date())].sort()[0];
+    const selected = new Date(`${picker.value}-01T12:00:00`);
+    selected.setMonth(selected.getMonth() + offset);
+    picker.value = [energyLocalMonth(selected), energyLocalMonth(new Date())].sort()[0];
+    energySelectedDate = null;
+    document.getElementById('energyDailyDetails').open = false;
     loadEnergyDashboard();
 }
 
@@ -2183,9 +2196,13 @@ async function loadEnergyDashboard() {
     const picker = document.getElementById('energyDatePicker');
     const errorBox = document.getElementById('energyError');
     if (!picker?.value) return;
+    const today = energyLocalDate(new Date());
+    const selectedDate = energySelectedDate?.startsWith(picker.value)
+        ? energySelectedDate
+        : (today.startsWith(picker.value) ? today : `${picker.value}-01`);
     errorBox.classList.add('hidden');
     try {
-        const response = await fetch(`${API_BASE_URL}/api/energy/dashboard?date=${encodeURIComponent(picker.value)}`);
+        const response = await fetch(`${API_BASE_URL}/api/energy/dashboard?date=${encodeURIComponent(selectedDate)}`);
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || '에너지 정보를 불러오지 못했습니다.');
         renderEnergyDashboard(data);
@@ -2213,22 +2230,72 @@ function renderEnergyDashboard(data) {
     const latest = data.latest?.measured_at ? new Date(data.latest.measured_at).toLocaleString('ko-KR') : '수집 기록 없음';
     document.getElementById('energyLatestReading').textContent = `최근 수집: ${latest}`;
     setEnergyStatus(data.status?.state, data.mode === 'demo' ? '데모 데이터' : (data.status?.message || '코콤 연결'));
-    renderEnergyChart(data.hours, data.hourly.electricity || []);
-    renderEnergyBill(data.projection.bill);
+    renderEnergyMonthChart(data.month_days || [], data.daily || [], data.date);
+    if (document.getElementById('energyDailyDetails').open) {
+        renderEnergyChart(data.hours, data.hourly.electricity || []);
+    }
+    renderEnergyBill(data.bill, data.projection.bill);
 }
 
 function renderEnergyHistory(dates, selectedDate) {
     const select = document.getElementById('energyHistorySelect');
-    select.innerHTML = '<option value="">저장된 날짜</option>';
-    dates.forEach(date => {
+    select.innerHTML = '<option value="">저장된 월</option>';
+    const months = [...new Set(dates.map(date => date.slice(0, 7)))];
+    months.forEach(month => {
         const option = document.createElement('option');
-        option.value = date;
-        option.textContent = new Date(`${date}T12:00:00`).toLocaleDateString('ko-KR', {
-            year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+        option.value = month;
+        option.textContent = new Date(`${month}-01T12:00:00`).toLocaleDateString('ko-KR', {
+            year: 'numeric', month: 'long'
         });
-        option.selected = date === selectedDate;
+        option.selected = month === selectedDate.slice(0, 7);
         select.appendChild(option);
     });
+}
+
+function renderEnergyMonthChart(days, values, selectedDate) {
+    const chart = document.getElementById('energyMonthChart');
+    const tooltip = document.getElementById('energyMonthChartTooltip');
+    const max = Math.max(...values.map(value => Number(value || 0)), 0.01);
+    chart.innerHTML = '';
+    days.forEach((day, index) => {
+        const rawValue = values[index];
+        const value = Number(rawValue || 0);
+        const date = `${selectedDate.slice(0, 8)}${String(index + 1).padStart(2, '0')}`;
+        const column = document.createElement('div');
+        column.className = 'energy-chart-column';
+        const bar = document.createElement('button');
+        bar.type = 'button';
+        bar.className = `energy-chart-bar${date === energySelectedDate ? ' is-selected' : ''}`;
+        bar.style.height = `${Math.max(2, value / max * 100)}%`;
+        bar.disabled = rawValue == null;
+        bar.setAttribute('aria-label', rawValue == null
+            ? `${day} 수집 데이터 없음`
+            : `${day} ${energyNumber(value, 3)} kWh`);
+        if (rawValue != null) {
+            bar.addEventListener('click', () => showEnergyDay(date));
+        }
+        const label = document.createElement('span');
+        label.className = 'energy-chart-hour';
+        label.textContent = index % 3 === 0 || index === days.length - 1 ? String(index + 1) : '';
+        column.append(bar, label);
+        chart.appendChild(column);
+    });
+    const selectedIndex = energySelectedDate ? Number(energySelectedDate.slice(8, 10)) - 1 : -1;
+    tooltip.textContent = selectedIndex >= 0 && values[selectedIndex] != null
+        ? `${selectedIndex + 1}일 · ${energyNumber(values[selectedIndex], 3)} kWh`
+        : '날짜 막대를 선택하세요.';
+}
+
+async function showEnergyDay(date) {
+    energySelectedDate = date;
+    const details = document.getElementById('energyDailyDetails');
+    details.open = true;
+    document.getElementById('energyDailyDetailsTitle').textContent =
+        new Date(`${date}T12:00:00`).toLocaleDateString('ko-KR', {
+            month: 'long', day: 'numeric', weekday: 'short'
+        });
+    await loadEnergyDashboard();
+    details.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function renderEnergyChart(hours, values) {
@@ -2254,16 +2321,25 @@ function renderEnergyChart(hours, values) {
     });
 }
 
-function renderEnergyBill(bill) {
+function renderEnergyBill(currentBill, projectedBill) {
     const rows = [
-        ['기본요금', bill.basic], ['전력량요금', bill.energy_charge],
-        ['기후환경요금', bill.climate], ['연료비조정액', bill.fuel],
-        ['부가가치세', bill.vat], ['전력산업기반기금', bill.fund], ['예상 합계', bill.total]
+        ['사용량', currentBill.usage_kwh, projectedBill.usage_kwh, 'kWh'],
+        ['기본요금', currentBill.basic, projectedBill.basic, '원'],
+        ['전력량요금', currentBill.energy_charge, projectedBill.energy_charge, '원'],
+        ['기후환경요금', currentBill.climate, projectedBill.climate, '원'],
+        ['연료비조정액', currentBill.fuel, projectedBill.fuel, '원'],
+        ['부가가치세', currentBill.vat, projectedBill.vat, '원'],
+        ['전력산업기반기금', currentBill.fund, projectedBill.fund, '원'],
+        ['합계', currentBill.total, projectedBill.total, '원']
     ];
-    document.getElementById('energyBillBreakdown').innerHTML = rows.map(([label, value], index) => {
-        const className = index === rows.length - 1 ? ' class="energy-bill-total"' : '';
-        return `<dt${className}>${label}</dt><dd${className}>${energyWon(value)}</dd>`;
-    }).join('');
+    document.getElementById('energyBillBreakdown').innerHTML = `
+        <div class="energy-bill-row energy-bill-head"><span>항목</span><strong>현재까지</strong><strong>월말 전망</strong></div>
+        ${rows.map(([label, current, projected, unit], index) => {
+            const className = index === rows.length - 1 ? ' energy-bill-total' : '';
+            const format = value => unit === 'kWh' ? `${energyNumber(value)} kWh` : energyWon(value);
+            return `<div class="energy-bill-row${className}"><span>${label}</span><strong>${format(current)}</strong><strong>${format(projected)}</strong></div>`;
+        }).join('')}
+    `;
 }
 
 function setEnergyStatus(state, message) {

@@ -167,6 +167,7 @@ def dashboard(selected: date) -> dict:
     if is_demo():
         seed_demo()
     hourly = store.hourly(selected)
+    daily = store.daily_usage(selected)
     day_kwh = round(sum(value or 0 for value in hourly["electricity"]), 3)
     month_kwh = store.month_usage(selected)
     voltage = os.getenv("ELECTRICITY_VOLTAGE", "high")
@@ -186,6 +187,8 @@ def dashboard(selected: date) -> dict:
         "date": selected.isoformat(),
         "hours": [f"{hour:02d}:00" for hour in range(24)],
         "hourly": hourly,
+        "month_days": [f"{day}일" for day in range(1, len(daily) + 1)],
+        "daily": daily,
         "day_kwh": day_kwh,
         "month_kwh": month_kwh,
         "bill": estimate_electricity_bill(month_kwh, voltage),
