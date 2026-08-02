@@ -154,8 +154,8 @@
                         <div class="dashboard-energy-metrics">
                             <div><span>오늘 사용량</span><strong id="dashboardEnergyDay">-- kWh</strong></div>
                             <div><span>이번 달 누적</span><strong id="dashboardEnergyMonth">-- kWh</strong></div>
-                            <div><span>예상 전기요금</span><strong id="dashboardEnergyBill">-- 원</strong></div>
-                            <div><span>4인 가족 기준</span><strong id="dashboardEnergyBenchmark">--%</strong></div>
+                            <div><span>월말 예상 사용량</span><strong id="dashboardEnergyProjection">-- kWh</strong></div>
+                            <div><span>월말 예상 요금</span><strong id="dashboardEnergyBill">-- 원</strong></div>
                         </div>
                         <div>
                             <div id="dashboardEnergyChart" class="dashboard-energy-chart" aria-label="오늘 시간별 에너지 사용량"></div>
@@ -523,8 +523,8 @@
             <div class="energy-summary-grid">
                 <article class="energy-summary-card"><span>선택일 사용량</span><strong id="energyDayUsage">-- kWh</strong><small>1시간 사용량 합계</small></article>
                 <article class="energy-summary-card"><span>이번 달 누적</span><strong id="energyMonthUsage">-- kWh</strong><small>코콤 월 누적 기준</small></article>
-                <article class="energy-summary-card energy-bill-card"><span>예상 전기요금</span><strong id="energyExpectedBill">-- 원</strong><small>부가세·전력기금 포함 추정</small></article>
-                <article class="energy-summary-card"><span>4인 가족 기준 대비</span><strong id="energyBenchmarkDiff">-- kWh</strong><small id="energyBenchmarkText">월 350 kWh 기준</small></article>
+                <article class="energy-summary-card"><span>월말 예상 사용량</span><strong id="energyProjectedUsage">-- kWh</strong><small id="energyProjectionMethod">현재 일평균 사용 속도 기준</small></article>
+                <article class="energy-summary-card energy-bill-card"><span>월말 예상 요금</span><strong id="energyExpectedBill">-- 원</strong><small>부가세·전력기금 포함 추정</small></article>
             </div>
 
             <div class="energy-panel">
@@ -538,13 +538,14 @@
 
             <div class="energy-detail-grid">
                 <div class="energy-panel">
-                    <div class="energy-panel-title"><div><h3>예상 요금 상세</h3><p>현재 설정된 주택용 계약종별 기준입니다.</p></div></div>
+                    <div class="energy-panel-title"><div><h3>월말 예상 요금 상세</h3><p>현재 사용 속도와 주택용 계약종별 기준입니다.</p></div></div>
                     <dl id="energyBillBreakdown" class="energy-bill-breakdown"></dl>
                 </div>
                 <div class="energy-panel">
-                    <div class="energy-panel-title"><div><h3>4인 가족 비교</h3><p id="energyBenchmarkBill">기준 요금을 계산 중입니다.</p></div></div>
+                    <div class="energy-panel-title"><div><h3>4인 가족 계절 비교</h3><p id="energyBenchmarkBill">조회 월의 계절 기준을 계산 중입니다.</p></div></div>
                     <div class="energy-gauge"><div id="energyGaugeFill" class="energy-gauge-fill"></div></div>
                     <strong id="energyGaugeLabel" class="energy-gauge-label">--%</strong>
+                    <p id="energyBenchmarkSource" class="energy-latest">계절 기준 출처를 확인 중입니다.</p>
                     <p id="energyLatestReading" class="energy-latest">최근 수집 기록이 없습니다.</p>
                 </div>
             </div>

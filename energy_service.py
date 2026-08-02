@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import os
 import threading
+from calendar import monthrange
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
@@ -16,6 +17,21 @@ ROOT = Path(__file__).resolve().parent
 load_dotenv(ROOT / ".env")
 
 store = EnergyStore(str(ROOT / os.getenv("KOCOM_DB_PATH", "family_hub.db")))
+
+FOUR_PERSON_SEASONAL_BENCHMARKS = {
+    1: ("겨울", 380.0),
+    2: ("겨울", 380.0),
+    3: ("봄", 280.0),
+    4: ("봄", 280.0),
+    5: ("봄", 280.0),
+    6: ("초여름", 340.0),
+    7: ("여름", 470.0),
+    8: ("여름", 470.0),
+    9: ("가을", 270.0),
+    10: ("가을", 270.0),
+    11: ("가을", 270.0),
+    12: ("겨울", 380.0),
+}
 for legacy_database in (
     ROOT / "data" / "energy-v3.db",
     ROOT / "data" / "energy.db",
@@ -154,7 +170,17 @@ def dashboard(selected: date) -> dict:
     day_kwh = round(sum(value or 0 for value in hourly["electricity"]), 3)
     month_kwh = store.month_usage(selected)
     voltage = os.getenv("ELECTRICITY_VOLTAGE", "high")
-    benchmark = float(os.getenv("FAMILY_BENCHMARK_KWH", "350"))
+    today = date.today()
+    days_in_month = monthrange(selected.year, selected.month)[1]
+    is_current_month = (selected.year, selected.month) == (today.year, today.month)
+    elapsed_days = max(1, min(today.day if is_current_month else days_in_month, days_in_month))
+    projected_kwh = (
+        round(month_kwh / elapsed_days * days_in_month, 1)
+        if is_current_month
+        else round(month_kwh, 1)
+    )
+    projected_bill = estimate_electricity_bill(projected_kwh, voltage)
+    season, benchmark = FOUR_PERSON_SEASONAL_BENCHMARKS[selected.month]
     available_dates = store.available_dates()
     return {
         "date": selected.isoformat(),
@@ -163,11 +189,21 @@ def dashboard(selected: date) -> dict:
         "day_kwh": day_kwh,
         "month_kwh": month_kwh,
         "bill": estimate_electricity_bill(month_kwh, voltage),
+        "projection": {
+            "kwh": projected_kwh,
+            "bill": projected_bill,
+            "elapsed_days": elapsed_days,
+            "days_in_month": days_in_month,
+            "method": "daily_average",
+        },
         "benchmark": {
             "kwh": benchmark,
             "bill": estimate_electricity_bill(benchmark, voltage)["total"],
-            "difference_kwh": round(month_kwh - benchmark, 1),
-            "percent": round(month_kwh / benchmark * 100, 1) if benchmark else 0,
+            "difference_kwh": round(projected_kwh - benchmark, 1),
+            "percent": round(projected_kwh / benchmark * 100, 1) if benchmark else 0,
+            "season": season,
+            "source": "전기가스 4인 가구 계절별 평균 참고값",
+            "source_url": "https://junkigas.com/electricity-and-gas-prices/average-bill-by-household",
         },
         "latest": store.latest(),
         "available_dates": available_dates,

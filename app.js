@@ -1866,8 +1866,8 @@ async function loadDashboardEnergy(force = false) {
 
         document.getElementById('dashboardEnergyDay').textContent = `${energyNumber(data.day_kwh, 2)} kWh`;
         document.getElementById('dashboardEnergyMonth').textContent = `${energyNumber(data.month_kwh)} kWh`;
-        document.getElementById('dashboardEnergyBill').textContent = energyWon(data.bill.total);
-        document.getElementById('dashboardEnergyBenchmark').textContent = `${energyNumber(data.benchmark.percent)}%`;
+        document.getElementById('dashboardEnergyProjection').textContent = `${energyNumber(data.projection.kwh)} kWh`;
+        document.getElementById('dashboardEnergyBill').textContent = energyWon(data.projection.bill.total);
 
         const values = data.hourly.electricity || [];
         const max = Math.max(...values.map(value => Number(value || 0)), 0.01);
@@ -2200,19 +2200,21 @@ function renderEnergyDashboard(data) {
     renderEnergyHistory(data.available_dates || [], data.date);
     document.getElementById('energyDayUsage').textContent = `${energyNumber(data.day_kwh, 2)} kWh`;
     document.getElementById('energyMonthUsage').textContent = `${energyNumber(data.month_kwh)} kWh`;
-    document.getElementById('energyExpectedBill').textContent = energyWon(data.bill.total);
-    const difference = Number(data.benchmark.difference_kwh || 0);
-    document.getElementById('energyBenchmarkDiff').textContent = `${difference > 0 ? '+' : ''}${energyNumber(difference)} kWh`;
-    document.getElementById('energyBenchmarkText').textContent = `월 ${energyNumber(data.benchmark.kwh, 0)} kWh 기준`;
-    document.getElementById('energyBenchmarkBill').textContent = `기준 사용량 예상 요금은 ${energyWon(data.benchmark.bill)}입니다.`;
+    document.getElementById('energyProjectedUsage').textContent = `${energyNumber(data.projection.kwh)} kWh`;
+    document.getElementById('energyProjectionMethod').textContent =
+        `${data.projection.elapsed_days}일 평균을 ${data.projection.days_in_month}일까지 적용`;
+    document.getElementById('energyExpectedBill').textContent = energyWon(data.projection.bill.total);
+    document.getElementById('energyBenchmarkBill').textContent =
+        `우리 집 월말 전망 ${energyNumber(data.projection.kwh)} kWh와 ${data.benchmark.season} 4인 가구 기준 ${energyNumber(data.benchmark.kwh, 0)} kWh·${energyWon(data.benchmark.bill)}을 비교합니다.`;
     const percent = Math.max(0, Number(data.benchmark.percent || 0));
     document.getElementById('energyGaugeFill').style.width = `${Math.min(percent, 100)}%`;
     document.getElementById('energyGaugeLabel').textContent = `기준의 ${energyNumber(percent)}%`;
+    document.getElementById('energyBenchmarkSource').textContent = `참고: ${data.benchmark.source}`;
     const latest = data.latest?.measured_at ? new Date(data.latest.measured_at).toLocaleString('ko-KR') : '수집 기록 없음';
     document.getElementById('energyLatestReading').textContent = `최근 수집: ${latest}`;
     setEnergyStatus(data.status?.state, data.mode === 'demo' ? '데모 데이터' : (data.status?.message || '코콤 연결'));
     renderEnergyChart(data.hours, data.hourly.electricity || []);
-    renderEnergyBill(data.bill);
+    renderEnergyBill(data.projection.bill);
 }
 
 function renderEnergyHistory(dates, selectedDate) {
