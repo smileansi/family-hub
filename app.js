@@ -142,6 +142,9 @@ function initTabs() {
                 button.classList.add('active');
                 document.getElementById(tabName).classList.add('active');
                 pageIntro?.classList.toggle('is-hidden', tabName !== 'dashboard');
+                if (window.matchMedia('(max-width: 768px)').matches) {
+                    button.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                }
 
                 // 탭 전환 시 서버에서 최신 데이터 로드 후 렌더링
                 await fetchAndUpdateFromServer();
@@ -185,46 +188,6 @@ function initTabs() {
 // ============================================
 // 스와이프 탭 전환 (모바일)
 // ============================================
-function initSwipe() {
-    const tabOrder = ['dashboard', 'calendar', 'bulletin', 'schedule', 'todos', 'shopping', 'weather'];
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchStartTime = 0;
-
-    const container = document.querySelector('.main-content') || document.body;
-
-    container.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-        touchStartTime = Date.now();
-    }, { passive: true });
-
-    container.addEventListener('touchend', (e) => {
-        const deltaX = e.changedTouches[0].clientX - touchStartX;
-        const deltaY = e.changedTouches[0].clientY - touchStartY;
-        const elapsed = Date.now() - touchStartTime;
-
-        // 수평 스와이프 조건: 50px 이상, 수직보다 수평이 더 크고, 500ms 이내
-        if (Math.abs(deltaX) < 50 || Math.abs(deltaX) < Math.abs(deltaY) * 1.5 || elapsed > 500) return;
-
-        const activeId = document.querySelector('.tab-content.active')?.id;
-        const currentIndex = tabOrder.indexOf(activeId);
-        if (currentIndex === -1) return;
-
-        const nextIndex = deltaX < 0
-            ? Math.min(currentIndex + 1, tabOrder.length - 1)
-            : Math.max(currentIndex - 1, 0);
-
-        if (nextIndex === currentIndex) return;
-
-        const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabOrder[nextIndex]}"]`);
-        if (targetBtn) {
-            targetBtn.click();
-            targetBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-        }
-    }, { passive: true });
-}
-
 // ============================================
 // 모달 관리
 // ============================================
@@ -2077,7 +2040,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     portalModalsToBody();
     await loadLocalData();
     initTabs();
-    initSwipe();
     setupModals();
     initCalendar();
     initScheduleMembers();
