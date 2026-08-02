@@ -68,13 +68,23 @@ class KocomClient:
         self.timeout = timeout
         self.sock: socket.socket | None = None
         self.town = self.dong = self.ho = self.reserved = 0
+        self.energy_protocol = 3
 
     def __enter__(self) -> "KocomClient":
         server = discover_server(self.user_id, self.timeout)
         self.sock = socket.create_connection((server, 15000), timeout=self.timeout)
         self.sock.settimeout(self.timeout)
         self._send(0, self._bind_body())
-        self._wait_for({1, 3001})
+        # The Android client performs a two-step handshake. A successful bind
+        # (subtype 1) is followed by a menu/capability request (subtype 3000).
+        # The server does not answer feature requests sent before this step.
+        self._wait_for({1})
+        self._send(3000, struct.pack("<I", 0))
+        capabilities = self._wait_for({3001}).body
+        # The Android app maps capability slot 5 to the site's energy API:
+        # 1=legacy monthly (120/121), 2=daily (420/421), otherwise 400/401.
+        if len(capabilities) >= 24:
+            self.energy_protocol = struct.unpack_from("<I", capabilities, 20)[0]
         return self
 
     def __exit__(self, *_args) -> None:
@@ -151,6 +161,14 @@ class KocomClient:
         raise KocomError(f"예상한 응답을 받지 못했습니다: {last}")
 
     def fetch_current_totals(self) -> dict[str, float]:
+        if self.energy_protocol == 1:
+            self._send(120, self._legacy_monthly_body())
+            response = self._wait_for({121, 419, 10000})
+            if response.subtype in {419, 10000}:
+                code = struct.unpack_from("<i", response.body, 0)[0]
+                raise KocomError(f"에너지 조회 실패 코드: {code}")
+            return parse_legacy_monthly_totals(response.body)
+
         now = datetime.now()
         body = bytearray(72)
         struct.pack_into("<III", body, 0, 2, 2, 1)
@@ -164,6 +182,50 @@ class KocomClient:
             code = struct.unpack_from("<i", response.body, 0)[0]
             raise KocomError(f"에너지 조회 실패 코드: {code}")
         return parse_current_totals(response.body)
+
+    @staticmethod
+    def _legacy_monthly_body() -> bytes:
+        now = datetime.now()
+        months: list[str] = []
+        year, month = now.year, now.month
+        for _ in range(3):
+            months.append(f"{year:04d}{month:02d}")
+            month -= 1
+            if month == 0:
+                year -= 1
+                month = 12
+        return _fixed(",".join(reversed(months)), 32)
+
+
+def parse_legacy_monthly_totals(body: bytes) -> dict[str, float]:
+    if len(body) < 4:
+        raise KocomError("에너지 응답이 너무 짧습니다.")
+    count = struct.unpack_from("<I", body, 0)[0]
+    current_month = datetime.now().strftime("%Y%m")
+    totals: dict[str, float] = {}
+    fallback: dict[str, tuple[str, float]] = {}
+    for index in range(min(count, 100)):
+        offset = 4 + index * 28
+        if len(body) < offset + 28:
+            break
+        kind_id = struct.unpack_from("<I", body, offset)[0]
+        kind = KIND_MAP.get(kind_id)
+        if not kind:
+            continue
+        period = body[offset + 4 : offset + 12].split(b"\0", 1)[0].decode(
+            "ascii", errors="ignore"
+        )[:6]
+        value = round(struct.unpack_from("<d", body, offset + 20)[0], 6)
+        if period == current_month:
+            totals[kind] = value
+        previous = fallback.get(kind)
+        if previous is None or period > previous[0]:
+            fallback[kind] = (period, value)
+    for kind, (_period, value) in fallback.items():
+        totals.setdefault(kind, value)
+    if not totals:
+        raise KocomError("에너지 항목을 응답에서 찾지 못했습니다.")
+    return totals
 
 
 def parse_current_totals(body: bytes) -> dict[str, float]:
