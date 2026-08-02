@@ -980,7 +980,7 @@ form button[type="submit"] {
 .energy-date-bar input,.energy-date-bar select{padding:10px 14px;border-radius:12px;font:inherit;font-weight:700}
 .energy-date-button{width:40px;height:40px;border-radius:50%;cursor:pointer}
 .energy-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
-.energy-summary-card,.energy-panel{background:#fff;border:1px solid var(--border-color);border-radius:18px;box-shadow:var(--shadow)}
+.energy-summary-card,.energy-panel{min-width:0;background:#fff;border:1px solid var(--border-color);border-radius:18px;box-shadow:var(--shadow)}
 .energy-summary-card{display:flex;flex-direction:column;min-height:132px;padding:20px}
 .energy-summary-card span,.energy-summary-card small,.energy-panel-title p,.energy-latest{color:var(--text-color)}
 .energy-summary-card strong{font-family:Manrope,sans-serif;font-size:25px;margin:auto 0 4px}
@@ -988,7 +988,7 @@ form button[type="submit"] {
 .energy-bill-card span,.energy-bill-card strong,.energy-bill-card small{color:#fff}
 .energy-panel{padding:20px;margin-bottom:16px}.energy-panel-title{align-items:flex-start;margin-bottom:20px}
 .energy-panel-title h3{margin:0 0 5px}.energy-panel-title p{margin:0;font-size:14px}
-.energy-chart{display:grid;grid-template-columns:repeat(24,minmax(13px,1fr));align-items:end;gap:5px;min-height:250px;padding:10px 4px 28px;border-bottom:1px solid var(--border-color)}
+.energy-chart{width:100%;min-width:0;display:grid;grid-template-columns:repeat(24,minmax(0,1fr));align-items:end;gap:5px;min-height:250px;padding:10px 4px 28px;border-bottom:1px solid var(--border-color)}
 .energy-chart-column{position:relative;height:220px;display:flex;align-items:flex-end;justify-content:center}
 .energy-chart-bar{width:100%;min-height:3px;border:0;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,#3b9470,#1f6b4f);cursor:pointer;transition:.15s}
 .energy-chart-bar:hover,.energy-chart-bar:focus{filter:brightness(1.1);transform:translateY(-2px);outline:none}
@@ -996,7 +996,7 @@ form button[type="submit"] {
 .energy-chart-bar.is-selected{background:linear-gradient(180deg,#f6b94a,#d97706);box-shadow:0 0 0 3px rgba(217,119,6,.14)}
 .energy-chart-hour{position:absolute;bottom:-24px;color:#94a3b8;font-size:11px}
 .energy-chart-tooltip{text-align:center;color:var(--text-color);font-size:14px;margin-top:12px}
-.energy-month-chart{grid-template-columns:repeat(31,minmax(10px,1fr))}
+.energy-month-chart{grid-template-columns:repeat(31,minmax(0,1fr))}
 .energy-daily-details{padding:0;overflow:hidden}
 .energy-daily-details summary{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:18px 20px;cursor:pointer;list-style:none}
 .energy-daily-details summary::-webkit-details-marker{display:none}
@@ -1031,7 +1031,7 @@ form button[type="submit"] {
 .dashboard-energy-updated{margin:10px 0 0;color:var(--text-color);font-size:12px;text-align:right}
 @media(max-width:1000px){.energy-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:800px){.dashboard-energy-content{grid-template-columns:1fr}}
-@media(max-width:600px){.energy-header,.energy-actions{align-items:stretch;flex-direction:column}.energy-date-bar{flex-wrap:wrap}.energy-summary-grid,.energy-detail-grid{grid-template-columns:1fr}.energy-chart{gap:2px;overflow-x:auto}.energy-month-chart{min-width:620px}.energy-bill-row{grid-template-columns:minmax(82px,1fr) minmax(76px,auto) minmax(76px,auto);gap:7px}.dashboard-energy-metrics{grid-template-columns:1fr 1fr}.dashboard-energy-chart{height:120px;gap:2px}}
+@media(max-width:600px){.energy-header,.energy-actions{align-items:stretch;flex-direction:column}.energy-date-bar{flex-wrap:wrap}.energy-summary-grid,.energy-detail-grid{grid-template-columns:1fr}.energy-chart{gap:2px;overflow:hidden;padding-inline:0}.energy-month-chart{width:100%;min-width:0}.energy-bill-row{grid-template-columns:minmax(82px,1fr) minmax(76px,auto) minmax(76px,auto);gap:7px}.dashboard-energy-metrics{grid-template-columns:1fr 1fr}.dashboard-energy-chart{height:120px;gap:2px}}
 
 /* ============================================
    Weather dashboard
